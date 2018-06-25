@@ -1,0 +1,7 @@
+job: XXXXXX_carbon_testJob2
+jobsDir: V:\Jobs
+profile: assets
+tokens:
+  asset: exampleAsset_01
+  spot: Spot_01
+  step: model
