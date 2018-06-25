@@ -40,7 +40,7 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 		try: 
 			cmds.file(filePath, o=True)
 			self.setEnvironment()
-			self.close()
+			return True
 		except RuntimeError:
 			self.debugMsg("Hey, this is cool")
 			ret = self.fileNotSavedDlg()
@@ -48,14 +48,15 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 				cmds.file(save=True)
 				cmds.file(filePath, o=True)
 				self.setEnvironment()
-				self.close()
+				return True
 			elif ret == QtGuiWidgets.QMessageBox.Discard:
 			    cmds.file(new=True, force=True) 
 			    cmds.file(filePath, open=True)
 			    self.setEnvironment()
-			    self.close()
+			    return True
 			elif ret == QtGuiWidgets.QMessageBox.Cancel:
 				self.debugMsg("Nevermind...")
+				return False
 
 	def debugMsg(self, msg):
 		print(msg)

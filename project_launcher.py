@@ -4,6 +4,7 @@
 import os
 import sys
 from collections import OrderedDict
+import yaml
 
 try:
 	# < Nuke 11
@@ -34,7 +35,7 @@ def deleteItemsOfLayout(layout):
 
 DEFAULT_JOBS_DIR = "V:\\Jobs"
 CONFIG_FILE_NAME = "config.yml"
-LOCAL_CONFIG_PATH = os.path.expanduser('~/carbonLocalConfig.yml')
+LOCAL_CONFIG_PATH = os.path.expanduser('~/pipeline_local_config.yml')
 
 class ProjectLauncher(QtGuiWidgets.QDialog):
 
@@ -51,11 +52,10 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		self.configReader = None
 		self.initUI()
 		self.populate_jobs()
+		self.load_recents()
 		self.show()
 
 	def initUI(self):
-		print("initializing...")
-
 		element_list = ["spot", "shot", "step"]
 
 		self.job_combo = QtGuiWidgets.QComboBox()
@@ -118,6 +118,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		self.on_job_change(jobsList[0])
 
 	def populate_profiles(self):
+		"""Fill in the profiles combo box with options from the project config"""
 		profileList = self.configReader.getLauncherProfiles(self.software).keys()
 		self.profile_combo.clear()
 		self.profile_combo.addItems(profileList)
@@ -128,6 +129,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		self.on_profile_change(profile)
 
 	def on_job_change(self, job):
+		"""Called whenever the job combo box is changed"""
 		self.current_job_path = os.path.join(self.jobs_dir, job)
 		self.configReader = config_reader.ConfigReader(self.current_job_path)
 
@@ -142,17 +144,16 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 			self.create_token_grid([])
 			self.debugMsg("Project does not include support for this software")
 
-		print("setting path_label to :" + self.current_job_path)
 		self.path_label.setText(self.current_job_path)
 
 	def on_profile_change(self, profile):
+		"""Called whnever the profile combo box is changed"""
 		self.template = self.configReader.getProfileTemplate(self.software, profile)
 		token_list = self.configReader.getTokens(self.template)
 		self.create_token_grid(token_list)
-		print(profile)
 
 	def create_token_grid(self, token_list):
-
+		"""Create the grid layout of tokens plus the file list that makes the body of the window"""
 		self.token_obj_dict.clear()
 		self.populate_file()
 
@@ -174,59 +175,53 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		self.token_grid.addWidget(self.file_list_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
 
-		print("This is it: " + str(self.token_obj_dict.keys()))
 		if len(self.token_obj_dict) > 0:
 			self.populate_token(self.token_obj_dict.keys()[0])
 
 	def launchProject(self, filePath):
-		print("Oh, I get it...")
-		self.close()
+		"""Just a placeholder. Should be overridden by child."""
+		return True
 
 	def on_launch_click(self):
-
+		"""Called when the launch button is clicked. Attempts to launch the project with child's 'launchProject' function"""
 		currentPath = self.configReader.getPath(self.template, self.get_token_dict())
 		self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
 
 		# If the file doesn't exist, create it with project_creator
 		if not os.path.isfile(self.finalPath):
-			print("This file doesn't exist! " + self.finalPath)
+			self.debugMsg("This file doesn't exist! Creating it here: " + self.finalPath)
 			project_creator.createProject(self.configReader, self.template, self.get_token_dict(), self.software, self.file_line_edit.text())
 
-		self.launchProject(self.finalPath)			
-		# self.saveRecents()
+		if self.launchProject(self.finalPath):
+			self.save_recents()
+			self.close()
 
 	def on_token_change(self, token, text):
+		"""Called whenever a token's list widget is changed."""
 		currentPath = self.configReader.getPath(self.template, self.get_token_dict(), token)
 		self.path_label.setText(os.path.join(currentPath, self.token_obj_dict[token].get_current()))
 
 		self.launchButton.setEnabled(False)
-
-		print(token + " changed to " + text)
-
 		index = self.token_obj_dict.keys().index(token)
 
 		if (len(self.token_obj_dict) > index+1):
 			next_token = self.token_obj_dict.keys()[index+1]
 			self.populate_token(next_token)
-			print(next_token)
-		else:
+		# else:
 			# self.populate_file()
-			print("oops, last one")
 
 		self.populate_file()
 
 
 	def on_token_button(self, token):
-		print(token + " clicked")
+		"""Called when a token object's 'new' button is clicked."""
 		new_token, ok = QtGuiWidgets.QInputDialog.getText(self, "Create Token", ("Create New " + token.capitalize()), QtGuiWidgets.QLineEdit.Normal, ("new_" + token))
 		if ok and new_token:
-			print("text = " + new_token)
-		    # textLabel.setText(text)
 			project_creator.createToken(self.configReader, self.template, self.get_token_dict(), token, new_token)
 			self.populate_token(token)
 
 	def debugMsg(self, msg):
-		'''Override this to customize how each software prints debug reports.'''
+		"""Override this to customize how each software prints debug reports."""
 		print(msg)
 
 
@@ -250,9 +245,9 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		return sorted(files, reverse=reverse)
 
 	def populate_token(self, token):
+		"""Populates a token's list widget."""
 		token_obj = self.token_obj_dict[token]
 		token_dict = self.get_token_dict()
-		print("Token dict: " + str(token_dict))
 		populate_path = self.configReader.getPath(self.template, self.get_token_dict(), token)
 
 		folderList = self.getDirList(populate_path)
@@ -270,15 +265,13 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 
 	def populate_file(self):
+		"""Populates the file list widget based on the previous tokens."""
 		self.file_list_widget.clear()
-
 		try:
 			token_dict = self.get_token_dict()
 			populatePath = self.configReader.getPath(self.template, token_dict)
 			file_list = self.getFileList(populatePath, self.extensions)
-			print("IT STILL WORKED?????????????????????????")
 		except:
-			print("WHYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
 			file_list = []
 		# self.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
 		if len(file_list) > 0:
@@ -286,7 +279,6 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 				current_item = QtGuiWidgets.QListWidgetItem(file, self.file_list_widget)
 				# Set to latest version
 				if (index+1 >= len(file_list)):
-					print("IT IS THE OF OF")
 					self.file_list_widget.setCurrentItem(current_item)
 					self.on_file_change(file)
 				else:
@@ -294,29 +286,89 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 
 	def on_file_change(self, file):
+		"""Called when the file list widget is changed."""
 		self.file_line_edit.setText(file)
 		self.on_file_line_change(file)
 
 	def on_file_line_change(self, file):
-		print("File = " + file)
+		"""Called when the file line is changed."""
 		if file:
 			currentPath = self.configReader.getPath(self.template, self.get_token_dict())
 			self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
-			print(self.finalPath)
 			self.path_label.setText(self.finalPath)
 
 		if file: 
 			self.launchButton.setEnabled(True)
 
 	def get_token_dict(self):
+		"""Get a dictionary of tokens from the dictionary of token objects."""
 		token_dict = dict()
 		for token_obj in self.token_obj_dict:
 			token_value = self.token_obj_dict[token_obj].get_current()
 			if token_value is not None:
 				token_dict[token_obj] = token_value
 		return token_dict
-			
+	
+	def set_list_widget(self, list_widget, item_name):
+		for i in range(list_widget.count()):
+			item = list_widget.item(i)
+			if item.text() == item_name:
+				list_widget.setCurrentItem(item)
+				return True
+		return False
 
+	def setComboBox(self, comboBox, value):
+		index = comboBox.findText(value)
+		if index >= 0:
+			comboBox.setCurrentIndex(index)
+
+	def read_local_config(self):
+		"""Read the local config and return it."""
+		localConfig = None
+		try:
+			with open(LOCAL_CONFIG_PATH, 'r') as stream:
+				localConfig = yaml.safe_load(stream) or {}
+		except IOError:
+			open(LOCAL_CONFIG_PATH, 'w')
+			localConfig = {}
+		return localConfig
+
+	def load_recents(self):
+		"""Load the most recent project from the software's local config."""
+		localConfig = self.read_local_config()
+		if localConfig is not None and self.software in localConfig:
+			softwareRecents = localConfig[self.software]
+			self.jobsDir = softwareRecents["jobsDir"]
+			self.populate_jobs()
+			self.setComboBox(self.job_combo, softwareRecents["job"])
+			self.on_job_change(softwareRecents["job"])
+
+			self.setComboBox(self.profile_combo, softwareRecents["profile"])
+			self.on_profile_change(softwareRecents["profile"])
+			recentsTokens = softwareRecents["tokens"]
+			for token, token_obj in self.token_obj_dict.iteritems():
+				#self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
+				self.set_list_widget(token_obj.list_widget, recentsTokens[token])
+				self.on_token_change(token, recentsTokens[token])
+				# self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
+				# self.onTokenChange(recentsTokens[token], self.tokenComboDict[token])
+
+	def save_recents(self):
+		"""Saves the project to the software's local config."""
+		recentOption = dict()
+		recentOption["jobsDir"] = str(self.jobs_dir)
+		recentOption["job"] = str(self.job_combo.currentText())
+		recentOption["profile"] = str(self.profile_combo.currentText())
+		tokenDict = dict()
+		for token, token_obj in self.token_obj_dict.iteritems():
+			tokenDict[str(token)] = str(token_obj.get_current())
+
+		recentOption["tokens"] = tokenDict
+
+		newConfig = self.read_local_config()
+		newConfig[self.software] = recentOption
+		with open(LOCAL_CONFIG_PATH, 'w') as outfile:
+		    yaml.dump(newConfig, outfile, default_flow_style=False)
 
 class Token():
 

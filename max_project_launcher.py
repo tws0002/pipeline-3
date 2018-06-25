@@ -40,7 +40,7 @@ class MaxProjectLauncher(project_launcher.ProjectLauncher):
 		fm = MaxPlus.FileManager
 		fm.Open(filePath)
 		self.setEnvironment()
-		self.close()
+		return True
 
 	def debugMsg(self, msg):
 		print(msg)

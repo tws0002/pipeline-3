@@ -38,7 +38,7 @@ class HoudiniProjectLauncher(project_launcher.ProjectLauncher):
 		hou.putenv("JOB", "COOL DUDE")
 		forwardSlashPath = filePath.replace('\\', '/')
 		hou.hipFile.load(forwardSlashPath)
-		self.close()
+		return True
 
 	def debugMsg(self, msg):
 		print(msg)

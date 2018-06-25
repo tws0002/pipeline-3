@@ -37,7 +37,7 @@ class NukeProjectLauncher(project_launcher.ProjectLauncher):
 			os.environ[token] = tokenDict[token]
 			self.debugMsg(token + " = " + tokenDict[token])
 		nuke.scriptOpen(filePath)
-		self.close()
+		return True
 
 	def debugMsg(self, msg):
 		nuke.tprint(msg)
