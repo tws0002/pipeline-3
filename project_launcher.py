@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Adam Thompson 2018
+# Test visual studio code commit
 
 import os
 import sys
