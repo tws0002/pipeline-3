@@ -59,7 +59,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		element_list = ["spot", "shot", "step"]
 
 		self.jobs_dir_label = QtGuiWidgets.QLabel(self.jobs_dir)
-		self.jobs_dir_label.setStyleSheet('color: blue')
+		self.jobs_dir_label.setStyleSheet('text-decoration: underline')
 		self.jobs_dir_label.mousePressEvent = self.jobs_dir_label_click
 
 		self.job_combo = QtGuiWidgets.QComboBox()
@@ -115,7 +115,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 	def jobs_dir_label_click(self, click_event):
 		"""Opens folder browser when jobs_dir_label is clicked"""
-		selected_directory = QtGui.QFileDialog.getExistingDirectory(dir=os.path.expanduser('~'))
+		selected_directory = QtGuiWidgets.QFileDialog.getExistingDirectory(dir=os.path.expanduser('~'))
 		if selected_directory:
 			self.jobs_dir = selected_directory
 			self.jobs_dir_label.setText(self.jobs_dir)
@@ -361,6 +361,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		if localConfig is not None and self.software in localConfig:
 			softwareRecents = localConfig[self.software]
 			self.jobs_dir = softwareRecents["jobs_dir"]
+			self.jobs_dir_label.setText(self.jobs_dir)
 			self.populate_jobs()
 			self.setComboBox(self.job_combo, softwareRecents["job"])
 			self.on_job_change(softwareRecents["job"])
