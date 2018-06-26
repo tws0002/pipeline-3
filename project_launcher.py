@@ -58,17 +58,22 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 	def initUI(self):
 		element_list = ["spot", "shot", "step"]
 
+		self.jobs_dir_label = QtGuiWidgets.QLabel(self.jobs_dir)
+		self.jobs_dir_label.setStyleSheet('color: blue')
+		self.jobs_dir_label.mousePressEvent = self.jobs_dir_label_click
+
 		self.job_combo = QtGuiWidgets.QComboBox()
 		self.job_combo.activated[str].connect(self.on_job_change)
 		self.profile_combo = QtGuiWidgets.QComboBox()
 		self.profile_combo.activated[str].connect(self.on_profile_change)
 
 		form_layout = QtGuiWidgets.QFormLayout()
-		form_layout.addRow("Job", self.job_combo)
-		form_layout.addRow("Profile", self.profile_combo)
+		form_layout.addRow("Jobs Dir: ", self.jobs_dir_label)
+		form_layout.addRow("Job: ", self.job_combo)
+		form_layout.addRow("Profile: ", self.profile_combo)
 		form_widget = QtGuiWidgets.QWidget()
 		form_widget.setLayout(form_layout)
-		form_widget.setFixedWidth(300)
+		form_widget.setFixedWidth(400)
 
 		self.token_grid = QtGuiWidgets.QGridLayout()
 
@@ -105,9 +110,16 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		vbox.addLayout(hbox)
 		self.setLayout(vbox)
 
-
 		self.resize(800,400)
 		self.setWindowTitle(self.software.capitalize() + " Project Launcher") 
+
+	def jobs_dir_label_click(self, click_event):
+		"""Opens folder browser when jobs_dir_label is clicked"""
+		selected_directory = QtGui.QFileDialog.getExistingDirectory(dir=os.path.expanduser('~'))
+		if selected_directory:
+			self.jobs_dir = selected_directory
+			self.jobs_dir_label.setText(self.jobs_dir)
+			self.populate_jobs()
 
 	def populate_jobs(self):
 		"""Look in jobs folder for jobs that contain the config file at root"""
@@ -115,7 +127,10 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		jobsList[:] = [job for job in jobsList if os.path.isfile(os.path.join(self.jobs_dir, job, CONFIG_FILE_NAME))]
 		self.job_combo.clear()
 		self.job_combo.addItems(jobsList)
-		self.on_job_change(jobsList[0])
+		if len(jobsList) > 0:
+			self.on_job_change(jobsList[0])
+		else:
+			self.on_job_change(None)
 
 	def populate_profiles(self):
 		"""Fill in the profiles combo box with options from the project config"""
@@ -130,21 +145,28 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 	def on_job_change(self, job):
 		"""Called whenever the job combo box is changed"""
-		self.current_job_path = os.path.join(self.jobs_dir, job)
-		self.configReader = config_reader.ConfigReader(self.current_job_path)
 
-		# check software support for current job
-		if self.configReader.checkSoftwareSupport(self.software):
-			self.extensions = self.configReader.getExtensions(self.software)
-			self.populate_profiles()
+		if job is not None:
+			self.current_job_path = os.path.join(self.jobs_dir, job)
+			self.configReader = config_reader.ConfigReader(self.current_job_path)
+			self.path_label.setText(self.current_job_path)
+
+			# check software support for current job
+			if self.configReader.checkSoftwareSupport(self.software):
+				self.extensions = self.configReader.getExtensions(self.software)
+				self.populate_profiles()
+			else:
+				self.clear_window()
+				self.debugMsg("Project does not include support for this software")
 		else:
-			self.token_obj_dict.clear()
-			self.profile_combo.clear()
-			self.template = ""
-			self.create_token_grid([])
-			self.debugMsg("Project does not include support for this software")
+			self.clear_window()
+			self.debugMsg("No jobs in this directory")
 
-		self.path_label.setText(self.current_job_path)
+	def clear_window(self):
+		self.token_obj_dict.clear()
+		self.profile_combo.clear()
+		self.template = ""
+		self.create_token_grid([])
 
 	def on_profile_change(self, profile):
 		"""Called whnever the profile combo box is changed"""
@@ -338,7 +360,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		localConfig = self.read_local_config()
 		if localConfig is not None and self.software in localConfig:
 			softwareRecents = localConfig[self.software]
-			self.jobsDir = softwareRecents["jobsDir"]
+			self.jobs_dir = softwareRecents["jobs_dir"]
 			self.populate_jobs()
 			self.setComboBox(self.job_combo, softwareRecents["job"])
 			self.on_job_change(softwareRecents["job"])
@@ -356,7 +378,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 	def save_recents(self):
 		"""Saves the project to the software's local config."""
 		recentOption = dict()
-		recentOption["jobsDir"] = str(self.jobs_dir)
+		recentOption["jobs_dir"] = str(self.jobs_dir)
 		recentOption["job"] = str(self.job_combo.currentText())
 		recentOption["profile"] = str(self.profile_combo.currentText())
 		tokenDict = dict()
