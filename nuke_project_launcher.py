@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 # Adam Thompson 2018
 
-import project_launcher
+import os
 
 import nuke
 import nukescripts
-
-import os
+import project_launcher
 
 try:
 	# < Nuke 11

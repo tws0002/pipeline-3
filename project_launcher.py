@@ -49,7 +49,6 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		self.extensions = []
 		self.template = ""
 		self.finalPath = ""
-
 		self.configReader = None
 		self.initUI()
 		self.populate_jobs()
@@ -146,7 +145,6 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 	def on_job_change(self, job):
 		"""Called whenever the job combo box is changed"""
-
 		if job is not None:
 			self.current_job_path = os.path.join(self.jobs_dir, job)
 			self.configReader = config_reader.ConfigReader(self.current_job_path)
@@ -235,7 +233,6 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 		self.populate_file()
 
-
 	def on_token_button(self, token):
 		"""Called when a token object's 'new' button is clicked."""
 		new_token, ok = QtGuiWidgets.QInputDialog.getText(self, "Create Token", ("Create New " + token.capitalize()), QtGuiWidgets.QLineEdit.Normal, ("new_" + token))
@@ -269,6 +266,8 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 
 	def populate_token(self, token):
 		"""Populates a token's list widget."""
+		previous_token_index = self.token_obj_dict.keys().index(token)-1
+		
 		token_obj = self.token_obj_dict[token]
 		token_dict = self.get_token_dict()
 		populate_path = self.configReader.getPath(self.template, self.get_token_dict(), token)
@@ -427,5 +426,5 @@ class Token():
 # Debugging -----------------------------------------------
 if __name__== '__main__':
 	app = QtGuiWidgets.QApplication(sys.argv)
-	ex = ProjectLauncher(app.activeWindow(), 'houdini')
+	ex = ProjectLauncher(app.activeWindow(), 'maya')
 	app.exec_()
