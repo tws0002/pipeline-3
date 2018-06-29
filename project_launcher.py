@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Adam Thompson 2018
-# Test visual studio code commit
 
 import os
 import sys
@@ -56,8 +55,6 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		self.show()
 
 	def initUI(self):
-		element_list = ["spot", "shot", "step"]
-
 		self.jobs_dir_label = QtGuiWidgets.QLabel(self.jobs_dir)
 		self.jobs_dir_label.setStyleSheet('text-decoration: underline')
 		self.jobs_dir_label.mousePressEvent = self.jobs_dir_label_click
@@ -98,16 +95,16 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		cancelButton = QtGuiWidgets.QPushButton("Cancel")
 		cancelButton.clicked.connect(self.close)
 
-		hbox = QtGuiWidgets.QHBoxLayout()
-		hbox.addStretch(1)
-		hbox.addWidget(self.launchButton)
-		hbox.addWidget(cancelButton)
+		self.hbox = QtGuiWidgets.QHBoxLayout()
+		self.hbox.addStretch(1)
+		self.hbox.addWidget(self.launchButton)
+		self.hbox.addWidget(cancelButton)
 
 		vbox = QtGuiWidgets.QVBoxLayout()
 		vbox.addWidget(form_widget)
 		vbox.addLayout(self.token_grid)
 		vbox.addWidget(self.path_label)
-		vbox.addLayout(hbox)
+		vbox.addLayout(self.hbox)
 		self.setLayout(vbox)
 
 		self.resize(800,400)
@@ -279,7 +276,7 @@ class ProjectLauncher(QtGuiWidgets.QDialog):
 		folderList = [x for x in folderList if x not in excludeList]
 
 		# Remove template folder from list
-		tokenFolder = "[" + token + "]"
+		tokenFolder = ".[" + token + "]"
 		if tokenFolder in folderList:
 			folderList.remove(tokenFolder)
 

@@ -41,7 +41,7 @@ def createToken(configReader, templateString, tokenDict, token, tokenValue=""):
 	if not os.path.isdir(pathToToken):
 		missingToken = token
 		pathToMissingToken = pathToToken
-		templateTokenFolder = os.path.join(os.path.dirname(pathToMissingToken),"[" + token + "]")
+		templateTokenFolder = os.path.join(os.path.dirname(pathToMissingToken),".[" + token + "]")
 		print("template token folder: " + templateTokenFolder)
 		distutils.dir_util.copy_tree(templateTokenFolder, pathToMissingToken)
 
