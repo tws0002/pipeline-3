@@ -3,6 +3,7 @@
 
 import os
 import sys
+import time
 from collections import OrderedDict
 import yaml
 
@@ -75,14 +76,16 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.token_grid = QtGuiWidgets.QGridLayout()
 
 		self.file_label = QtGuiWidgets.QLabel("File")
-		self.file_list_widget = QtGuiWidgets.QListWidget()
-		self.file_list_widget.currentTextChanged.connect(self.on_file_change)
+		self.file_tree_widget = QtGuiWidgets.QTreeWidget()
+		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
+		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
+		self.file_tree_widget.itemExpanded.connect(self.on_file_expand)
 		self.file_line_edit = QtGuiWidgets.QLineEdit()
 		self.file_line_edit.textEdited.connect(self.on_file_line_change)
 
 		self.file_vbox = QtGuiWidgets.QVBoxLayout()
 		self.file_vbox.addWidget(self.file_label)
-		self.file_vbox.addWidget(self.file_list_widget)
+		self.file_vbox.addWidget(self.file_tree_widget)
 		self.file_vbox.addWidget(self.file_line_edit)
 
 		self.path_label = QtGuiWidgets.QLabel()
@@ -197,7 +200,7 @@ class Navigator(QtGuiWidgets.QDialog):
 			self.token_grid.addWidget(token_obj.add_button, 2, index)
 
 		self.token_grid.addWidget(self.file_label, 0, len(token_list))
-		self.token_grid.addWidget(self.file_list_widget, 1, len(token_list))
+		self.token_grid.addWidget(self.file_tree_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
 
 		if len(self.token_obj_dict) > 0:
@@ -279,24 +282,60 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def populate_file(self):
 		"""Populates the file list widget based on the previous tokens."""
-		self.file_list_widget.clear()
+
+		self.file_tree_widget.clear()
+		print("Let's build this!")
 		try:
 			token_dict = self.get_token_dict()
-			populatePath = self.configReader.getPath(self.template, token_dict)
-			file_list = self.getFileList(populatePath, self.extensions)
+			populate_path = self.configReader.getPath(self.template, token_dict)
+			self.build_file_tree(populate_path, self.file_tree_widget)
 		except:
-			file_list = []
-		# self.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
-		if len(file_list) > 0:
-			for index, file in enumerate(file_list):
-				current_item = QtGuiWidgets.QListWidgetItem(file, self.file_list_widget)
-				# Set to latest version
-				if (index+1 >= len(file_list)):
-					self.file_list_widget.setCurrentItem(current_item)
-					self.on_file_change(file)
-				else:
-					self.on_file_change("")
+			pass
 
+		# self.file_list_widget.clear()
+		# try:
+		# 	token_dict = self.get_token_dict()
+		# 	populatePath = self.configReader.getPath(self.template, token_dict)
+		# 	file_list = self.getFileList(populatePath, self.extensions)
+		# except:
+		# 	file_list = []
+		# # self.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
+		# if len(file_list) > 0:
+		# 	for index, file in enumerate(file_list):
+		# 		current_item = QtGuiWidgets.QListWidgetItem(file, self.file_list_widget)
+		# 		# Set to latest version
+		# 		if (index+1 >= len(file_list)):
+		# 			self.file_list_widget.setCurrentItem(current_item)
+		# 			self.on_file_change(file)
+		# 		else:
+		# 			self.on_file_change("")
+
+	def on_file_expand(self, item):
+		print("Trying to expand!")
+		for i in reversed(range(item.childCount())):
+			item.removeChild(item.child(i))
+		path = item.text(2)
+		print("path = " + path)
+		self.build_file_tree(path, item)
+
+
+	def build_file_tree(self, path, tree):
+		print("Building file tree!")
+		list_dir = os.listdir(path)
+		# mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+		# list_dir = list(sorted(list_dir, key = os.path.getmtime))
+		# list_dir = self.sorted_listdir(path)
+		for element in list_dir:
+			path_info = os.path.join(path, element)
+			date = time.strftime('%m/%d/%y %H:%M',  time.gmtime(os.path.getmtime(path_info)))
+			parent_itm = QtGuiWidgets.QTreeWidgetItem(tree, [os.path.basename(element),date])
+			parent_itm.setData(2, QtCore.Qt.EditRole, path_info)
+			if os.path.isdir(path_info):
+				parent_itm.setChildIndicatorPolicy(QtGuiWidgets.QTreeWidgetItem.ShowIndicator)
+				# self.build_file_tree(path_info, parent_itm)
+			# 	parent_itm.setIcon(0, QIcon('assets/folder.ico'))
+			# else:
+			# 	parent_itm.setIcon(0, QIcon('assets/file.ico'))
 
 	def on_file_change(self, file):
 		"""Called when the file list widget is changed."""
