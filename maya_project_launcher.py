@@ -28,7 +28,7 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 	def __init__(self):
 		super(MayaProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya project launcher...")
+		self.debugMsg("Starting local maya project launcher...")
 
 	def launchProject(self, filePath):
 		tokenDict = self.get_token_dict()
