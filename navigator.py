@@ -95,6 +95,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 		self.file_label = QtGuiWidgets.QLabel("File")
 		self.file_tree_widget = DeselectableTreeWidget()
+		self.file_tree_widget.setSortingEnabled(True)
 		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
 		self.file_tree_widget.setColumnWidth(0, 230)
 		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
