@@ -30,13 +30,31 @@ def deleteItemsOfLayout(layout):
              item = layout.takeAt(0)
              widget = item.widget()
              if widget is not None:
-                 widget.setParent(None)
+				widget.setParent(None)
              else:
                  deleteItemsOfLayout(item.layout())
 
-DEFAULT_JOBS_DIR = "C:\\Jobs"
+
+# def deleteItemsOfLayout(layout):
+# 	if layout is not None:
+# 		for i in reversed(range(layout.count())):
+# 			item = layout.itemAt(i)
+# 			widget = item.widget()
+# 			if widget is not None:
+# 				widget.deleteLater()
+# 			else:
+# 				deleteItemsOfLayout(item.layout())
+
+
+DEFAULT_JOBS_DIR = "V:\\Jobs"
 CONFIG_FILE_NAME = "config.yml"
 LOCAL_CONFIG_PATH = os.path.expanduser('~/pipeline_local_config.yml')
+
+class DeselectableTreeWidget(QtGuiWidgets.QTreeWidget):
+    def mousePressEvent(self, event):
+		self.clearSelection()
+		QtGuiWidgets.QTreeView.mousePressEvent(self, event)
+
 
 class Navigator(QtGuiWidgets.QDialog):
 
@@ -76,9 +94,9 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.token_grid = QtGuiWidgets.QGridLayout()
 
 		self.file_label = QtGuiWidgets.QLabel("File")
-		self.file_tree_widget = QtGuiWidgets.QTreeWidget()
+		self.file_tree_widget = DeselectableTreeWidget()
 		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
-		self.file_tree_widget.setColumnWidth(0, 250)
+		self.file_tree_widget.setColumnWidth(0, 230)
 		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
 		self.file_tree_widget.itemExpanded.connect(self.on_file_expand)
 		self.file_line_edit = QtGuiWidgets.QLineEdit()
@@ -88,6 +106,8 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.file_vbox.addWidget(self.file_label)
 		self.file_vbox.addWidget(self.file_tree_widget)
 		self.file_vbox.addWidget(self.file_line_edit)
+
+		self.file_widgets = [self.file_label, self.file_tree_widget, self.file_line_edit]
 
 		self.path_label = QtGuiWidgets.QLabel()
 
@@ -103,20 +123,23 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.hbox.addWidget(self.execute_button)
 		self.hbox.addWidget(cancelButton)
 
-		vbox = QtGuiWidgets.QVBoxLayout()
-		vbox.addWidget(form_widget)
-		vbox.addLayout(self.token_grid)
-		vbox.addWidget(self.path_label)
-		vbox.addLayout(self.hbox)
-		self.setLayout(vbox)
+		self.vbox = QtGuiWidgets.QVBoxLayout()
+		self.vbox.addWidget(form_widget)
+		self.vbox.addLayout(self.token_grid)
+		self.vbox.addWidget(self.path_label)
+		self.vbox.addLayout(self.hbox)
+		self.setLayout(self.vbox)
 
 		self.resize(900,450)
+
+
 
 	def create_execute_button(self):
 		execute_button = QtGuiWidgets.QPushButton("Execute")
 		execute_button.setEnabled(False)
 
 		return execute_button
+
 
 	def jobs_dir_label_click(self, click_event):
 		"""Opens folder browser when jobs_dir_label is clicked"""
@@ -193,6 +216,9 @@ class Navigator(QtGuiWidgets.QDialog):
 
 		deleteItemsOfLayout(self.token_grid)
 
+		self.token_grid = QtGuiWidgets.QGridLayout()
+		self.vbox.insertLayout(2, self.token_grid)
+		
 		for index, token in enumerate(token_list):
 			token_obj = Token(self, token)
 			self.token_obj_dict[token] = token_obj
@@ -204,6 +230,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.token_grid.addWidget(self.file_label, 0, len(token_list))
 		self.token_grid.addWidget(self.file_tree_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
+		print("Column count:" + str(self.token_grid.columnCount()))
 		self.token_grid.setColumnStretch(len(token_list), 2)
 
 		if len(self.token_obj_dict) > 0:
@@ -353,23 +380,36 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def on_file_change(self, item):
 		"""Called when the file tree widget is changed."""
+
 		self.file_line_edit.clear()
+		item.setSelected(True)
 		if item:
 			path = item.text(2)
 			file_name = os.path.basename(path)
+			token_path = self.configReader.getPath(self.template, self.get_token_dict())
+			rel_path = os.path.relpath(path, token_path)
+			# rel_path = path.replace(token_path, '')
+			print("rel path: " + rel_path)
 			if not os.path.isdir(path):
-				self.file_line_edit.setText(file_name)
+				self.file_line_edit.setText(rel_path)
+				self.on_file_line_change(rel_path)
+			else:
+				self.file_line_edit.setText('')
 				self.on_file_line_change(file_name)
 
 	def on_file_line_change(self, file):
 		"""Called when the file line is changed."""
+
 		if file:
 			currentPath = self.configReader.getPath(self.template, self.get_token_dict())
+
+			extended_path = self.file_tree_widget.currentItem().text(2)
+			selected = self.file_tree_widget.currentItem().isSelected()
+			print("extended path: " + extended_path + str(selected))
 			self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
 			self.path_label.setText(self.finalPath)
-
-		if file: 
 			self.execute_button.setEnabled(True)
+
 
 	def get_token_dict(self):
 		"""Get a dictionary of tokens from the dictionary of token objects."""
@@ -407,24 +447,24 @@ class Navigator(QtGuiWidgets.QDialog):
 	def load_recents(self):
 		"""Load the most recent project from the software's local config."""
 		print("Nevermind")
-		# localConfig = self.read_local_config()
-		# if localConfig is not None and self.software in localConfig:
-		# 	softwareRecents = localConfig[self.software]
-		# 	self.jobs_dir = softwareRecents["jobs_dir"]
-		# 	self.jobs_dir_label.setText(self.jobs_dir)
-		# 	self.populate_jobs()
-		# 	self.setComboBox(self.job_combo, softwareRecents["job"])
-		# 	self.on_job_change(softwareRecents["job"])
+		localConfig = self.read_local_config()
+		if localConfig is not None and self.software in localConfig:
+			softwareRecents = localConfig[self.software]
+			self.jobs_dir = softwareRecents["jobs_dir"]
+			self.jobs_dir_label.setText(self.jobs_dir)
+			self.populate_jobs()
+			self.setComboBox(self.job_combo, softwareRecents["job"])
+			self.on_job_change(softwareRecents["job"])
 
-		# 	self.setComboBox(self.profile_combo, softwareRecents["profile"])
-		# 	self.on_profile_change(softwareRecents["profile"])
-		# 	recentsTokens = softwareRecents["tokens"]
-		# 	for token, token_obj in self.token_obj_dict.iteritems():
-		# 		#self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
-		# 		self.set_list_widget(token_obj.list_widget, recentsTokens[token])
-		# 		self.on_token_change(token, recentsTokens[token])
-		# 		# self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
-		# 		# self.onTokenChange(recentsTokens[token], self.tokenComboDict[token])
+			self.setComboBox(self.profile_combo, softwareRecents["profile"])
+			self.on_profile_change(softwareRecents["profile"])
+			recentsTokens = softwareRecents["tokens"]
+			for token, token_obj in self.token_obj_dict.iteritems():
+				#self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
+				self.set_list_widget(token_obj.list_widget, recentsTokens[token])
+				self.on_token_change(token, recentsTokens[token])
+				# self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
+				# self.onTokenChange(recentsTokens[token], self.tokenComboDict[token])
 
 	def save_recents(self):
 		"""Saves the project to the software's local config."""
@@ -471,7 +511,6 @@ class Token():
 
 	def get_current(self):
 		return self.current_text
-
 
 # Debugging -----------------------------------------------
 if __name__== '__main__':

@@ -40,7 +40,7 @@ class ConfigReader:
 		templateTokens = self.findTokens(templateString)
 		formatedTemplateString = templateString
 		for token in templateTokens:
-			if token in self.tokenList:
+			if token in self.tokenList and  self.tokenList.get(token):
 				tokenSyntax = "<" + token + ">"
 				# print("trying to replace " + token + " of this syntax: " + tokenSyntax + " with " + self.tokenList.get(token))
 				# print("first it's this: " + templateString)
