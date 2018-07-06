@@ -387,12 +387,16 @@ class Navigator(QtGuiWidgets.QDialog):
 			rel_path = os.path.relpath(path, token_path)
 			# rel_path = path.replace(token_path, '')
 			# print("rel path: " + rel_path)
-			if not os.path.isdir(path):
-				self.file_line_edit.setText(rel_path)
-				self.on_file_line_change(rel_path)
-			else:
-				self.file_line_edit.setText('')
-				self.on_file_line_change(file_name)
+			if os.path.isdir(path):
+				rel_path = os.path.join(rel_path, '')
+			self.file_line_edit.setText(rel_path)
+			self.on_file_line_change(rel_path)
+			# if not os.path.isdir(path):
+			# 	self.file_line_edit.setText(rel_path)
+			# 	self.on_file_line_change(rel_path)
+			# else:
+			# 	self.file_line_edit.setText('')
+			# 	self.on_file_line_change(file_name)
 
 	def on_file_line_change(self, file):
 		"""Called when the file line is changed."""
@@ -405,7 +409,10 @@ class Navigator(QtGuiWidgets.QDialog):
 			# print("extended path: " + extended_path + str(selected))
 			self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
 			self.path_label.setText(self.finalPath)
-			self.execute_button.setEnabled(True)
+			if not os.path.isdir(self.finalPath):
+				self.execute_button.setEnabled(True)
+			else:
+				self.execute_button.setEnabled(False)
 
 
 	def get_token_dict(self):
