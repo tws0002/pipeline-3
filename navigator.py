@@ -34,7 +34,7 @@ def deleteItemsOfLayout(layout):
              else:
                  deleteItemsOfLayout(item.layout())
 
-DEFAULT_JOBS_DIR = "V:\\Jobs"
+DEFAULT_JOBS_DIR = "C:\\Jobs"
 CONFIG_FILE_NAME = "config.yml"
 LOCAL_CONFIG_PATH = os.path.expanduser('~/pipeline_local_config.yml')
 
@@ -78,6 +78,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.file_label = QtGuiWidgets.QLabel("File")
 		self.file_tree_widget = QtGuiWidgets.QTreeWidget()
 		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
+		self.file_tree_widget.setColumnWidth(0, 250)
 		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
 		self.file_tree_widget.itemExpanded.connect(self.on_file_expand)
 		self.file_line_edit = QtGuiWidgets.QLineEdit()
@@ -109,7 +110,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		vbox.addLayout(self.hbox)
 		self.setLayout(vbox)
 
-		self.resize(800,400)
+		self.resize(900,450)
 
 	def create_execute_button(self):
 		execute_button = QtGuiWidgets.QPushButton("Execute")
@@ -198,10 +199,12 @@ class Navigator(QtGuiWidgets.QDialog):
 			self.token_grid.addWidget(token_obj.label, 0, index)
 			self.token_grid.addWidget(token_obj.list_widget, 1, index)
 			self.token_grid.addWidget(token_obj.add_button, 2, index)
+			self.token_grid.setColumnStretch(index, 1)
 
 		self.token_grid.addWidget(self.file_label, 0, len(token_list))
 		self.token_grid.addWidget(self.file_tree_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
+		self.token_grid.setColumnStretch(len(token_list), 2)
 
 		if len(self.token_obj_dict) > 0:
 			self.populate_token(self.token_obj_dict.keys()[0])
@@ -333,14 +336,30 @@ class Navigator(QtGuiWidgets.QDialog):
 			if os.path.isdir(path_info):
 				parent_itm.setChildIndicatorPolicy(QtGuiWidgets.QTreeWidgetItem.ShowIndicator)
 				# self.build_file_tree(path_info, parent_itm)
+			else:
+				fileInfo = QtCore.QFileInfo(path_info)
+				iconProvider = QtGuiWidgets.QFileIconProvider()
+				icon = iconProvider.icon(fileInfo)
+				parent_itm.setIcon(0, icon)
+				# fileInfo = QtCore.QFileInfo(path_info)
+    			# iconProvider = QtGuiWidgets.QFileIconProvider()
+    			# icon = iconProvider.icon(fileInfo)
+				# parent_itm.setIcon(0, icon)
+				# parent_itm.setIcon(0, icon)
+
 			# 	parent_itm.setIcon(0, QIcon('assets/folder.ico'))
 			# else:
 			# 	parent_itm.setIcon(0, QIcon('assets/file.ico'))
 
-	def on_file_change(self, file):
-		"""Called when the file list widget is changed."""
-		self.file_line_edit.setText(file)
-		self.on_file_line_change(file)
+	def on_file_change(self, item):
+		"""Called when the file tree widget is changed."""
+		self.file_line_edit.clear()
+		if item:
+			path = item.text(2)
+			file_name = os.path.basename(path)
+			if not os.path.isdir(path):
+				self.file_line_edit.setText(file_name)
+				self.on_file_line_change(file_name)
 
 	def on_file_line_change(self, file):
 		"""Called when the file line is changed."""
