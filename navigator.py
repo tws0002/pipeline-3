@@ -230,7 +230,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.token_grid.addWidget(self.file_label, 0, len(token_list))
 		self.token_grid.addWidget(self.file_tree_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
-		print("Column count:" + str(self.token_grid.columnCount()))
+		# print("Column count:" + str(self.token_grid.columnCount()))
 		self.token_grid.setColumnStretch(len(token_list), 2)
 
 		if len(self.token_obj_dict) > 0:
@@ -314,7 +314,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		"""Populates the file list widget based on the previous tokens."""
 
 		self.file_tree_widget.clear()
-		print("Let's build this!")
+		# print("Let's build this!")
 		try:
 			token_dict = self.get_token_dict()
 			populate_path = self.configReader.getPath(self.template, token_dict)
@@ -341,16 +341,13 @@ class Navigator(QtGuiWidgets.QDialog):
 		# 			self.on_file_change("")
 
 	def on_file_expand(self, item):
-		print("Trying to expand!")
 		for i in reversed(range(item.childCount())):
 			item.removeChild(item.child(i))
 		path = item.text(2)
-		print("path = " + path)
 		self.build_file_tree(path, item)
 
 
 	def build_file_tree(self, path, tree):
-		print("Building file tree!")
 		list_dir = os.listdir(path)
 		# mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
 		# list_dir = list(sorted(list_dir, key = os.path.getmtime))
@@ -389,7 +386,7 @@ class Navigator(QtGuiWidgets.QDialog):
 			token_path = self.configReader.getPath(self.template, self.get_token_dict())
 			rel_path = os.path.relpath(path, token_path)
 			# rel_path = path.replace(token_path, '')
-			print("rel path: " + rel_path)
+			# print("rel path: " + rel_path)
 			if not os.path.isdir(path):
 				self.file_line_edit.setText(rel_path)
 				self.on_file_line_change(rel_path)
@@ -405,7 +402,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 			extended_path = self.file_tree_widget.currentItem().text(2)
 			selected = self.file_tree_widget.currentItem().isSelected()
-			print("extended path: " + extended_path + str(selected))
+			# print("extended path: " + extended_path + str(selected))
 			self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
 			self.path_label.setText(self.finalPath)
 			self.execute_button.setEnabled(True)
@@ -446,7 +443,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def load_recents(self):
 		"""Load the most recent project from the software's local config."""
-		print("Nevermind")
+		# print("Nevermind")
 		localConfig = self.read_local_config()
 		if localConfig is not None and self.software in localConfig:
 			softwareRecents = localConfig[self.software]
