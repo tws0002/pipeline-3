@@ -35,17 +35,6 @@ def deleteItemsOfLayout(layout):
                  deleteItemsOfLayout(item.layout())
 
 
-# def deleteItemsOfLayout(layout):
-# 	if layout is not None:
-# 		for i in reversed(range(layout.count())):
-# 			item = layout.itemAt(i)
-# 			widget = item.widget()
-# 			if widget is not None:
-# 				widget.deleteLater()
-# 			else:
-# 				deleteItemsOfLayout(item.layout())
-
-
 DEFAULT_JOBS_DIR = "V:\\Jobs"
 CONFIG_FILE_NAME = "config.yml"
 LOCAL_CONFIG_PATH = os.path.expanduser('~/pipeline_local_config.yml')
@@ -98,8 +87,9 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.file_tree_widget.setSortingEnabled(True)
 		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
 		# self.file_tree_widget.setColumnWidth(0, 230)
-		# self.file_tree_widget.header().setResizeMode(0, QtGuiWidgets.QHeaderView.Stretch)
-		# self.file_tree_widget.header().setResizeMode(1, QtGuiWidgets.QHeaderView.ResizeToContents)
+		self.file_tree_widget.header().setResizeMode(0, QtGuiWidgets.QHeaderView.Stretch)
+		self.file_tree_widget.header().setStretchLastSection(False)
+		self.file_tree_widget.header().setResizeMode(1, QtGuiWidgets.QHeaderView.ResizeToContents)
 		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
 		self.file_tree_widget.itemExpanded.connect(self.on_file_expand)
 		self.file_line_edit = QtGuiWidgets.QLineEdit()
@@ -133,7 +123,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.vbox.addLayout(self.hbox)
 		self.setLayout(self.vbox)
 
-		self.resize(900,450)
+		self.resize(1000,500)
 
 
 
@@ -241,8 +231,10 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def on_token_change(self, token, text):
 		"""Called whenever a token's list widget is changed."""
-		currentPath = self.configReader.getPath(self.template, self.get_token_dict(), token)
-		self.path_label.setText(os.path.join(currentPath, self.token_obj_dict[token].get_current()))
+
+		if text:
+			currentPath = self.configReader.getPath(self.template, self.get_token_dict(), token)
+			self.path_label.setText(os.path.join(currentPath, self.token_obj_dict[token].get_current()))
 
 		self.execute_button.setEnabled(False)
 		index = self.token_obj_dict.keys().index(token)
@@ -250,6 +242,17 @@ class Navigator(QtGuiWidgets.QDialog):
 		if (len(self.token_obj_dict) > index+1):
 			next_token = self.token_obj_dict.keys()[index+1]
 			self.populate_token(next_token)
+
+
+		# for i, token in enumerate(self.token_obj_dict, start=index+2):
+		# 	# print(str(self.token_obj_dict[token]))
+			# self.token_obj_dict[token].clear()
+			# for token, thing in enumerate(self.token_obj_dict, start=index+2):
+			# 	print("token: " + token)
+			# 	print("thing: " + thing)
+				# token.clear()
+
+
 		# else:
 			# self.populate_file()
 
@@ -294,23 +297,28 @@ class Navigator(QtGuiWidgets.QDialog):
 	def populate_token(self, token):
 		"""Populates a token's list widget."""
 		previous_token_index = self.token_obj_dict.keys().index(token)-1
-		
+		previous_token_obj = self.token_obj_dict.values()[previous_token_index]
 		token_obj = self.token_obj_dict[token]
-		token_dict = self.get_token_dict()
-		populate_path = self.configReader.getPath(self.template, self.get_token_dict(), token)
 
-		folderList = self.getDirList(populate_path)
-		excludeList = self.configReader.getExcludes(token)
+		if previous_token_obj.get_current() or previous_token_index <= 0:
+			token_dict = self.get_token_dict()
+			populate_path = self.configReader.getPath(self.template, self.get_token_dict(), token)
 
-		# Remove any occurances of excludeList from folderList
-		folderList = [x for x in folderList if x not in excludeList]
+			folderList = self.getDirList(populate_path)
+			excludeList = self.configReader.getExcludes(token)
 
-		# Remove template folder from list
-		tokenFolder = ".[" + token + "]"
-		if tokenFolder in folderList:
-			folderList.remove(tokenFolder)
+			# Remove any occurances of excludeList from folderList
+			folderList = [x for x in folderList if x not in excludeList]
 
-		token_obj.set_list(folderList)
+			# Remove template folder from list
+			tokenFolder = ".[" + token + "]"
+			if tokenFolder in folderList:
+				folderList.remove(tokenFolder)
+
+			token_obj.set_list(folderList)
+		else:
+			print("Going to clear this token: " + str(token_obj))
+			token_obj.clear()
 
 
 	def populate_file(self):
@@ -352,9 +360,6 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def build_file_tree(self, path, tree):
 		list_dir = os.listdir(path)
-		# mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
-		# list_dir = list(sorted(list_dir, key = os.path.getmtime))
-		# list_dir = self.sorted_listdir(path)
 		for element in list_dir:
 			path_info = os.path.join(path, element)
 			date = time.strftime('%m/%d/%y %H:%M',  time.gmtime(os.path.getmtime(path_info)))
@@ -368,22 +373,14 @@ class Navigator(QtGuiWidgets.QDialog):
 				iconProvider = QtGuiWidgets.QFileIconProvider()
 				icon = iconProvider.icon(fileInfo)
 				parent_itm.setIcon(0, icon)
-				# fileInfo = QtCore.QFileInfo(path_info)
-    			# iconProvider = QtGuiWidgets.QFileIconProvider()
-    			# icon = iconProvider.icon(fileInfo)
-				# parent_itm.setIcon(0, icon)
-				# parent_itm.setIcon(0, icon)
 
-			# 	parent_itm.setIcon(0, QIcon('assets/folder.ico'))
-			# else:
-			# 	parent_itm.setIcon(0, QIcon('assets/file.ico'))
 
 	def on_file_change(self, item):
 		"""Called when the file tree widget is changed."""
 
 		self.file_line_edit.clear()
-		item.setSelected(True)
 		if item:
+			item.setSelected(True)
 			path = item.text(2)
 			file_name = os.path.basename(path)
 			token_path = self.configReader.getPath(self.template, self.get_token_dict())
@@ -506,6 +503,9 @@ class Token():
 		self.add_button = QtGuiWidgets.QPushButton("New " + tokenString)
 		self.add_button.clicked.connect(self.on_token_button)
 
+	def __str__(self):
+		return "Token Obj:\nParent: " + str(self.parent) + " token: " + str(self.token)
+
 
 	def on_token_change(self, text):
 		self.current_text = text
@@ -518,6 +518,9 @@ class Token():
 		self.list_widget.clear()
 		for element in options_list:
 			QtGuiWidgets.QListWidgetItem(element, self.list_widget)
+
+	def clear(self):
+		self.list_widget.clear()
 
 	def get_current(self):
 		return self.current_text
