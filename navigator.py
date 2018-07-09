@@ -97,7 +97,9 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.file_tree_widget = DeselectableTreeWidget()
 		self.file_tree_widget.setSortingEnabled(True)
 		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
-		self.file_tree_widget.setColumnWidth(0, 230)
+		# self.file_tree_widget.setColumnWidth(0, 230)
+		# self.file_tree_widget.header().setResizeMode(0, QtGuiWidgets.QHeaderView.Stretch)
+		# self.file_tree_widget.header().setResizeMode(1, QtGuiWidgets.QHeaderView.ResizeToContents)
 		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
 		self.file_tree_widget.itemExpanded.connect(self.on_file_expand)
 		self.file_line_edit = QtGuiWidgets.QLineEdit()
@@ -405,8 +407,11 @@ class Navigator(QtGuiWidgets.QDialog):
 		if file:
 			currentPath = self.configReader.getPath(self.template, self.get_token_dict())
 
-			extended_path = self.file_tree_widget.currentItem().text(2)
-			selected = self.file_tree_widget.currentItem().isSelected()
+			# extended_path=''
+
+			# try:
+			# 	extended_path = self.file_tree_widget.currentItem().text(2)
+			# selected = self.file_tree_widget.currentItem().isSelected()
 			# print("extended path: " + extended_path + str(selected))
 			self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
 			self.path_label.setText(self.finalPath)
