@@ -5,6 +5,7 @@ import os
 
 import importer
 import project_launcher
+import saver
 
 import maya.cmds as cmds
 
@@ -24,6 +25,8 @@ except:
 SOFTWARE = "maya"
 WORKSPACE_FILE = "workspace.mel"
 ROOT_TOKENS = ['asset', 'shot']
+
+
 
 class MayaImporter(importer.Importer):
 
@@ -189,3 +192,22 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 			cmds.workspace(path, openWorkspace=True)
 		else:
 			self.debugMsg("That's not a file, dummy!")
+
+
+
+class MayaSaver(saver.Saver):
+	def __init__(self):
+		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
+		self.debugMsg("Starting local maya importer...")
+
+	def save_file(self, file_path):
+
+		try:
+			cmds.file( rename=file_path)
+			cmds.file(save=True)
+			return True
+		except:
+			return False
+
+	def debugMsg(self, msg):
+		print(msg)

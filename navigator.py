@@ -87,9 +87,13 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.file_tree_widget.setSortingEnabled(True)
 		self.file_tree_widget.setHeaderLabels(["Name", "Date"])
 		# self.file_tree_widget.setColumnWidth(0, 230)
-		self.file_tree_widget.header().setResizeMode(0, QtGuiWidgets.QHeaderView.Stretch)
 		self.file_tree_widget.header().setStretchLastSection(False)
-		self.file_tree_widget.header().setResizeMode(1, QtGuiWidgets.QHeaderView.ResizeToContents)
+		try:
+			self.file_tree_widget.header().setResizeMode(0, QtGuiWidgets.QHeaderView.Stretch)
+			self.file_tree_widget.header().setResizeMode(1, QtGuiWidgets.QHeaderView.ResizeToContents)
+		except:
+			self.file_tree_widget.header().setSectionResizeMode(0, QtGuiWidgets.QHeaderView.Stretch)
+			self.file_tree_widget.header().setSectionResizeMode(1, QtGuiWidgets.QHeaderView.ResizeToContents)
 		self.file_tree_widget.currentItemChanged.connect(self.on_file_change)
 		self.file_tree_widget.itemExpanded.connect(self.on_file_expand)
 		self.file_line_edit = QtGuiWidgets.QLineEdit()
@@ -300,6 +304,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		previous_token_obj = self.token_obj_dict.values()[previous_token_index]
 		token_obj = self.token_obj_dict[token]
 
+		# Populate the next token if the previous one has a selection or it's the first one
 		if previous_token_obj.get_current() or previous_token_index <= 0:
 			token_dict = self.get_token_dict()
 			populate_path = self.configReader.getPath(self.template, self.get_token_dict(), token)
@@ -317,7 +322,6 @@ class Navigator(QtGuiWidgets.QDialog):
 
 			token_obj.set_list(folderList)
 		else:
-			print("Going to clear this token: " + str(token_obj))
 			token_obj.clear()
 
 

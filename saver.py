@@ -24,7 +24,7 @@ class Saver(navigator.Navigator):
 
 	def __init__(self, active_window, software):
 		super(Saver, self).__init__(active_window, software)
-		self.setWindowTitle(self.software.capitalize() + " Importer") 
+		self.setWindowTitle(self.software.capitalize() + " Saver") 
 		self.debugMsg("Starting saver...")
 	
 	def create_execute_button(self):
