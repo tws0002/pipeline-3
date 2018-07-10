@@ -6,6 +6,7 @@ import sys
 import time
 from collections import OrderedDict
 import yaml
+import ast
 
 try:
 	# < Nuke 11
@@ -59,7 +60,6 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.configReader = None
 		self.initUI()
 		self.populate_jobs()
-		self.load_recents()
 		self.show()
 
 	def initUI(self):
@@ -455,12 +455,24 @@ class Navigator(QtGuiWidgets.QDialog):
 			localConfig = {}
 		return localConfig
 
-	def load_recents(self):
-		"""Load the most recent project from the software's local config."""
+	def load_recents(self, read_local_config=False):
+		"""Tries to load the project from the environment variables and falls back on local config unless read_local_config is explicitly set"""
 		# print("Nevermind")
 		localConfig = self.read_local_config()
-		if localConfig is not None and self.software in localConfig:
+		softwareRecents = dict()
+		if read_local_config and localConfig and self.software in localConfig:
 			softwareRecents = localConfig[self.software]
+
+		else:
+			try:
+				softwareRecents["jobs_dir"] = os.environ["jobs_dir"]
+				softwareRecents["job"] = os.environ["job"]
+				softwareRecents["profile"] = os.environ["profile"]
+				softwareRecents["tokens"] = ast.literal_eval(os.environ["tokens"])
+			except:
+				debugmsg("No current environment")
+
+		if softwareRecents:
 			self.jobs_dir = softwareRecents["jobs_dir"]
 			self.jobs_dir_label.setText(self.jobs_dir)
 			self.populate_jobs()
@@ -477,7 +489,7 @@ class Navigator(QtGuiWidgets.QDialog):
 				# self.setComboBox(self.tokenComboDict[token], recentsTokens[token])
 				# self.onTokenChange(recentsTokens[token], self.tokenComboDict[token])
 
-	def save_recents(self):
+	def save_recents(self, write_local_config=False):
 		"""Saves the project to the software's local config."""
 		recentOption = dict()
 		recentOption["jobs_dir"] = str(self.jobs_dir)
@@ -488,6 +500,9 @@ class Navigator(QtGuiWidgets.QDialog):
 			tokenDict[str(token)] = str(token_obj.get_current())
 
 		recentOption["tokens"] = tokenDict
+
+		for recent, value in recentOption.iteritems():
+			os.environ[recent] = str(value)
 
 		newConfig = self.read_local_config()
 		newConfig[self.software] = recentOption

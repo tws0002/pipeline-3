@@ -26,6 +26,7 @@ class ProjectLauncher(navigator.Navigator):
 	def __init__(self, active_window, software):
 		print("hi!")
 		super(ProjectLauncher, self).__init__(active_window, software)
+		self.load_recents(read_local_config=True)
 		self.setWindowTitle(self.software.capitalize() + " Project Launcher") 
 		self.debugMsg("Starting project launcher...")
 	
@@ -51,7 +52,7 @@ class ProjectLauncher(navigator.Navigator):
 			project_creator.createProject(self.configReader, self.template, self.get_token_dict(), self.software, self.file_line_edit.text())
 
 		if self.launchProject(self.finalPath):
-			self.save_recents()
+			self.save_recents(write_local_config=True)
 			self.close()
 
 # Debugging -----------------------------------------------

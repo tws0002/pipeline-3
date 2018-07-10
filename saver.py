@@ -24,6 +24,7 @@ class Saver(navigator.Navigator):
 
 	def __init__(self, active_window, software):
 		super(Saver, self).__init__(active_window, software)
+		self.load_recents()
 		self.setWindowTitle(self.software.capitalize() + " Saver") 
 		self.debugMsg("Starting saver...")
 	
@@ -52,6 +53,7 @@ class Saver(navigator.Navigator):
 
 		else:
 			if self.save_file(self.finalPath):
+				self.save_recents(write_local_config=True)
 				self.close()
 
 

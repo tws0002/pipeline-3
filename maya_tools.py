@@ -178,6 +178,9 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 	def setEnvironment(self):
 
+		super(MayaProjectLauncher, self).save_recents(write_local_config=True)
+
+		# Find current root token
 		rootToken = ""
 		for token in self.get_token_dict():
 			if token in ROOT_TOKENS:
