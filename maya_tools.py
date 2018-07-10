@@ -32,7 +32,7 @@ class MayaImporter(importer.Importer):
 
 	def __init__(self):
 		super(MayaImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting local maya importer...")
+		self.debugMsg("Starting maya importer...")
 
 	def import_file(self, file_path):
 		import_dialog = ImportDialog(QtGuiWidgets.QApplication.activeWindow(), file_path).exec_()
@@ -41,13 +41,7 @@ class MayaImporter(importer.Importer):
 			return True
 		else:
 			print("FAIL, in a good way.")
-		# file_name, file_extension = os.path.splitext(file_path)
-		# namespace, ok = QtGuiWidgets.QInputDialog.getText(self, "Reference Maya File", ("Choose a namespace:"), QtGuiWidgets.QLineEdit.Normal, file_name)
-		# if ok and namespace:
-		# self.debugMsg("Let's try this")
-		# cmds.file(file_path, reference=True)
-				# cmds.file(file_path, i=True)
-			# cmds.file( file_path, reference=True, namespace=namespace )
+
 
 	def debugMsg(self, msg):
 		print(msg)
@@ -130,11 +124,15 @@ class ImportDialog(QtGuiWidgets.QDialog):
 	def get_value(self):
 		return "Yup, that definitely worked."
 
+	def debugMsg(self, msg):
+		print(msg)
+
+
 class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 	def __init__(self):
 		super(MayaProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting local maya project launcher...")
+		self.debugMsg("Starting maya project launcher...")
 
 	def launchProject(self, filePath):
 		tokenDict = self.get_token_dict()
@@ -179,7 +177,6 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 	def setEnvironment(self):
 
 		super(MayaProjectLauncher, self).save_recents(write_local_config=True)
-
 		# Find current root token
 		rootToken = ""
 		for token in self.get_token_dict():
@@ -197,11 +194,10 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 			self.debugMsg("That's not a file, dummy!")
 
 
-
 class MayaSaver(saver.Saver):
 	def __init__(self):
 		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting local maya importer...")
+		self.debugMsg("Starting maya saver...")
 
 	def save_file(self, file_path):
 

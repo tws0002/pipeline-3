@@ -227,7 +227,6 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.token_grid.addWidget(self.file_label, 0, len(token_list))
 		self.token_grid.addWidget(self.file_tree_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
-		# print("Column count:" + str(self.token_grid.columnCount()))
 		self.token_grid.setColumnStretch(len(token_list), 2)
 
 		if len(self.token_obj_dict) > 0:
@@ -246,19 +245,6 @@ class Navigator(QtGuiWidgets.QDialog):
 		if (len(self.token_obj_dict) > index+1):
 			next_token = self.token_obj_dict.keys()[index+1]
 			self.populate_token(next_token)
-
-
-		# for i, token in enumerate(self.token_obj_dict, start=index+2):
-		# 	# print(str(self.token_obj_dict[token]))
-			# self.token_obj_dict[token].clear()
-			# for token, thing in enumerate(self.token_obj_dict, start=index+2):
-			# 	print("token: " + token)
-			# 	print("thing: " + thing)
-				# token.clear()
-
-
-		# else:
-			# self.populate_file()
 
 		self.populate_file()
 
@@ -337,6 +323,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		except:
 			pass
 
+		# TODO: Auto select most recent item
 		# self.file_list_widget.clear()
 		# try:
 		# 	token_dict = self.get_token_dict()
@@ -457,20 +444,18 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def load_recents(self, read_local_config=False):
 		"""Tries to load the project from the environment variables and falls back on local config unless read_local_config is explicitly set"""
-		# print("Nevermind")
 		localConfig = self.read_local_config()
 		softwareRecents = dict()
-		if read_local_config and localConfig and self.software in localConfig:
-			softwareRecents = localConfig[self.software]
+		try:
+			softwareRecents["jobs_dir"] = os.environ["jobs_dir"]
+			softwareRecents["job"] = os.environ["job"]
+			softwareRecents["profile"] = os.environ["profile"]
+			softwareRecents["tokens"] = ast.literal_eval(os.environ["tokens"])
+		except:
+			self.debugMsg("No current environment")
 
-		else:
-			try:
-				softwareRecents["jobs_dir"] = os.environ["jobs_dir"]
-				softwareRecents["job"] = os.environ["job"]
-				softwareRecents["profile"] = os.environ["profile"]
-				softwareRecents["tokens"] = ast.literal_eval(os.environ["tokens"])
-			except:
-				debugmsg("No current environment")
+		if localConfig and self.software in localConfig:
+			softwareRecents = localConfig[self.software]
 
 		if softwareRecents:
 			self.jobs_dir = softwareRecents["jobs_dir"]
