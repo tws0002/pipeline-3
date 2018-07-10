@@ -127,7 +127,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.vbox.addLayout(self.hbox)
 		self.setLayout(self.vbox)
 
-		self.resize(1000,500)
+		self.resize(1200,500)
 
 
 
@@ -227,7 +227,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.token_grid.addWidget(self.file_label, 0, len(token_list))
 		self.token_grid.addWidget(self.file_tree_widget, 1, len(token_list))
 		self.token_grid.addWidget(self.file_line_edit, 2, len(token_list))
-		self.token_grid.setColumnStretch(len(token_list), 2)
+		self.token_grid.setColumnStretch(len(token_list), 3)
 
 		if len(self.token_obj_dict) > 0:
 			self.populate_token(self.token_obj_dict.keys()[0])

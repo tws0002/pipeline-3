@@ -36,11 +36,8 @@ class MayaImporter(importer.Importer):
 
 	def import_file(self, file_path):
 		import_dialog = ImportDialog(QtGuiWidgets.QApplication.activeWindow(), file_path).exec_()
-		if import_dialog:
-			print("success!")
-			return True
-		else:
-			print("FAIL, in a good way.")
+		# Returns true or false based on the import dialog
+		return import_dialog
 
 
 	def debugMsg(self, msg):
@@ -97,7 +94,7 @@ class ImportDialog(QtGuiWidgets.QDialog):
 		vbox.addLayout(hbox)
 
 		self.setLayout(vbox)
-		# self.resize(800,400)
+
 
 	def on_ok(self):
 		flags = self.get_flags()
@@ -124,9 +121,6 @@ class ImportDialog(QtGuiWidgets.QDialog):
 	def get_value(self):
 		return "Yup, that definitely worked."
 
-	def debugMsg(self, msg):
-		print(msg)
-
 
 class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
@@ -136,10 +130,6 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 	def launchProject(self, filePath):
 		tokenDict = self.get_token_dict()
-		self.debugMsg("Setting environment variables: ")
-		for token in tokenDict:
-			os.environ[token] = tokenDict[token]
-			self.debugMsg(token + " = " + tokenDict[token])
 
 		try: 
 			cmds.file(filePath, o=True)
@@ -175,8 +165,6 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 		return ret
 
 	def setEnvironment(self):
-
-		super(MayaProjectLauncher, self).save_recents(write_local_config=True)
 		# Find current root token
 		rootToken = ""
 		for token in self.get_token_dict():
