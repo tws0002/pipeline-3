@@ -66,6 +66,7 @@ class ImportDialog(QtGuiWidgets.QDialog):
 		self.ref_checkbox.setChecked(True)
 		self.use_namespace_checkbox = QtGuiWidgets.QCheckBox()
 		self.use_namespace_checkbox.setChecked(True)
+		self.use_namespace_checkbox.stateChanged.connect(self.on_namespace_checkbox_change)
 		self.namespace_lineedit = QtGuiWidgets.QLineEdit(self.file_name)
 
 
@@ -102,6 +103,9 @@ class ImportDialog(QtGuiWidgets.QDialog):
 		print("flags: " + str(flags))
 		cmds.file(self.file_path, **flags)
 		self.accept()
+
+	def on_namespace_checkbox_change(self, state):
+		self.namespace_lineedit.setEnabled(state)
 
 	def get_flags(self):
 		flags = dict()
