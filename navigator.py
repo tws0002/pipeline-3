@@ -350,14 +350,16 @@ class Navigator(QtGuiWidgets.QDialog):
 
 
 	def build_file_tree(self, path, tree):
+		""" Finds all files and folders in the given path and adds it to the tree under the given tree item """
 		list_dir = os.listdir(path)
 		for element in list_dir:
 			path_info = os.path.join(path, element)
-			date = time.strftime('%m/%d/%y %H:%M',  time.gmtime(os.path.getmtime(path_info)))
+			date = time.strftime('%m/%d/%y %H:%M',  time.localtime(os.path.getmtime(path_info)))
 			parent_itm = QtGuiWidgets.QTreeWidgetItem(tree, [os.path.basename(element),date])
 			parent_itm.setData(2, QtCore.Qt.EditRole, path_info)
 			if os.path.isdir(path_info):
 				parent_itm.setChildIndicatorPolicy(QtGuiWidgets.QTreeWidgetItem.ShowIndicator)
+				# Activate the following line in order to recursively build the whole tree
 				# self.build_file_tree(path_info, parent_itm)
 			else:
 				fileInfo = QtCore.QFileInfo(path_info)
