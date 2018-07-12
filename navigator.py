@@ -132,6 +132,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 
 	def create_execute_button(self):
+		""" This is a separate function so the button can be placed correctly in the correct order """
 		execute_button = QtGuiWidgets.QPushButton("Execute")
 		execute_button.setEnabled(False)
 
@@ -190,6 +191,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		return self.configReader.getExtensions(self.software)
 
 	def clear_window(self):
+		""" Empties everything in the window """
 		self.token_obj_dict.clear()
 		self.profile_combo.clear()
 		self.template = ""
@@ -343,6 +345,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		# 			self.on_file_change("")
 
 	def on_file_expand(self, item):
+		""" Clears everything currently in the tree under the givent tree item and builds a new tree under it.  """
 		for i in reversed(range(item.childCount())):
 			item.removeChild(item.child(i))
 		path = item.text(2)
@@ -429,6 +432,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		return False
 
 	def setComboBox(self, comboBox, value):
+		""" Sets a combo box based on a string. """
 		index = comboBox.findText(value)
 		if index >= 0:
 			comboBox.setCurrentIndex(index)

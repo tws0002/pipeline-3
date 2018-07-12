@@ -99,7 +99,6 @@ class ImportDialog(QtGuiWidgets.QDialog):
 
 	def on_ok(self):
 		flags = self.get_flags()
-
 		print("flags: " + str(flags))
 		cmds.file(self.file_path, **flags)
 		self.accept()
@@ -108,6 +107,7 @@ class ImportDialog(QtGuiWidgets.QDialog):
 		self.namespace_lineedit.setEnabled(state)
 
 	def get_flags(self):
+		""" Returns a dictionary of flags based on what is currently selected in the dialog. """
 		flags = dict()
 
 		if self.ref_checkbox.isChecked():
@@ -120,10 +120,6 @@ class ImportDialog(QtGuiWidgets.QDialog):
 			flags["namespace"] = self.namespace_lineedit.text()
 		
 		return flags
-
-
-	def get_value(self):
-		return "Yup, that definitely worked."
 
 
 class MayaProjectLauncher(project_launcher.ProjectLauncher):
@@ -191,6 +187,7 @@ class MayaSaver(saver.Saver):
 
 
 def set_environment(config_reader, template, token_dict,):
+	""" Finds if the root is a shot or asset and looks for the WORKSPACE_FILE there. """
 	# Find current root token
 	rootToken = ""
 	for token in token_dict:
