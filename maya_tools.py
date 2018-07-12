@@ -137,7 +137,7 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 		try: 
 			cmds.file(filePath, o=True)
-			self.setEnvironment()
+			set_environment(self.configReader, self.template, self.get_token_dict())
 			return True
 		except RuntimeError:
 			self.debugMsg("Hey, this is cool")
@@ -145,12 +145,12 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 			if ret == QtGuiWidgets.QMessageBox.Save:
 				cmds.file(save=True)
 				cmds.file(filePath, o=True)
-				self.setEnvironment()
+				set_environment(self.configReader, self.template, self.get_token_dict())
 				return True
 			elif ret == QtGuiWidgets.QMessageBox.Discard:
 			    cmds.file(new=True, force=True) 
 			    cmds.file(filePath, open=True)
-			    self.setEnvironment()
+			    set_environment(self.configReader, self.template, self.get_token_dict())
 			    return True
 			elif ret == QtGuiWidgets.QMessageBox.Cancel:
 				self.debugMsg("Nevermind...")
@@ -168,23 +168,6 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 		ret = msgBox.exec_()
 		return ret
 
-	def setEnvironment(self):
-		# Find current root token
-		rootToken = ""
-		for token in self.get_token_dict():
-			if token in ROOT_TOKENS:
-				rootToken = token
-
-		self.debugMsg("The last token is: " + rootToken)
-		path = os.path.join(self.configReader.getPath(self.template, self.get_token_dict(), rootToken), self.get_token_dict()[rootToken])
-		filepath = os.path.join(path, WORKSPACE_FILE)
-		self.debugMsg("Trying to load this workspace: " + path)
-		if os.path.isfile(filepath):
-			self.debugMsg("Loading this workspace: " + path)
-			cmds.workspace(path, openWorkspace=True)
-		else:
-			self.debugMsg("That's not a file, dummy!")
-
 
 class MayaSaver(saver.Saver):
 	def __init__(self):
@@ -196,9 +179,33 @@ class MayaSaver(saver.Saver):
 		try:
 			cmds.file( rename=file_path)
 			cmds.file(save=True)
+			set_environment(self.configReader, self.template, self.get_token_dict())
 			return True
 		except:
 			return False
 
+
 	def debugMsg(self, msg):
 		print(msg)
+
+
+
+def set_environment(config_reader, template, token_dict,):
+	# Find current root token
+	rootToken = ""
+	for token in token_dict:
+		if token in ROOT_TOKENS:
+			rootToken = token
+
+	debugMsg("The last token is: " + rootToken)
+	path = os.path.join(config_reader.getPath(template, token_dict, rootToken), token_dict[rootToken])
+	filepath = os.path.join(path, WORKSPACE_FILE)
+	debugMsg("Trying to load this workspace: " + path)
+	if os.path.isfile(filepath):
+		debugMsg("Loading this workspace: " + path)
+		cmds.workspace(path, openWorkspace=True)
+	else:
+		debugMsg("That's not a valid workspace!")
+
+def debugMsg(msg):
+	print(msg)
