@@ -6,8 +6,11 @@ import os
 import importer
 import project_launcher
 import saver
+import common_tools
 
 import maya.cmds as cmds
+import maya.mel as mel
+import pymel.core as pm
 
 try:
 	# < Nuke 11
@@ -203,6 +206,37 @@ def set_environment(config_reader, template, token_dict,):
 		cmds.workspace(path, openWorkspace=True)
 	else:
 		debugMsg("That's not a valid workspace!")
+
+
+def version_up():
+	print("Trying to version up")
+	new_path = common_tools.version_up(pm.system.sceneName(), only_filename=True)
+	if new_path:
+		cmds.file( rename=new_path)
+		cmds.file(save=True)
+
+
+def addMenu():
+	
+	print("Loading Pipeline...")
+
+	# Name of the global variable for the Maya window
+	MainMayaWindow = pm.language.melGlobals['gMainWindow'] 
+
+	# Build a menu and parent underthe Maya Window
+	customMenu = pm.menu('Carbon Pipeline', parent=MainMayaWindow)
+
+	# Build a menu item and parent under the 'customMenu'
+	pm.menuItem(label="Project Launcher", command="pipeline.maya_tools.MayaProjectLauncher()", parent=customMenu)
+
+	pm.menuItem(label="Importer", command="pipeline.maya_tools.MayaImporter()", parent=customMenu)
+
+	pm.menuItem(label="Save", command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
+
+	pm.menuItem(label="Version Up", command="pipeline.maya_tools.version_up()", parent=customMenu)
+
+
+
 
 def debugMsg(msg):
 	print(msg)
