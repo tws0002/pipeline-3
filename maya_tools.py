@@ -227,9 +227,9 @@ def addMenu():
 	customMenu = pm.menu('Carbon Pipeline', parent=MainMayaWindow)
 
 	# Build a menu item and parent under the 'customMenu'
-	pm.menuItem(label="Project Launcher", command="pipeline.maya_tools.MayaProjectLauncher()", parent=customMenu)
+	pm.menuItem(label="Launch Project", command="pipeline.maya_tools.MayaProjectLauncher()", parent=customMenu)
 
-	pm.menuItem(label="Importer", command="pipeline.maya_tools.MayaImporter()", parent=customMenu)
+	pm.menuItem(label="Import", command="pipeline.maya_tools.MayaImporter()", parent=customMenu)
 
 	pm.menuItem(label="Save", command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
 
