@@ -102,5 +102,3 @@ def setup():
 	current_dir = os.path.dirname(os.path.abspath(__file__))
 	houdini_path = os.path.join(current_dir, 'houdini')
 	hou.putenv("HOUDINI_PATH", "&;" + houdini_path)
-
-	print("HERE WE GO DOOD!")
