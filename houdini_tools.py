@@ -101,4 +101,5 @@ def version_up():
 def setup():
 	current_dir = os.path.dirname(os.path.abspath(__file__))
 	houdini_path = os.path.join(current_dir, 'houdini')
-	hou.putenv("HOUDINI_PATH", "&;" + houdini_path)
+	current_path = hou.getenv("HOUDINI_PATH")
+	hou.putenv("HOUDINI_PATH", "&;" + houdini_path + ";" + current_path)
