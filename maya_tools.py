@@ -189,7 +189,7 @@ class MayaSaver(saver.Saver):
 
 
 
-def set_environment(config_reader, template, token_dict,):
+def set_environment(config_reader, template, token_dict):
 	""" Finds if the root is a shot or asset and looks for the WORKSPACE_FILE there. """
 	# Find current root token
 	rootToken = ""

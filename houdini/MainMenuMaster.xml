@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mainMenu>
+	<menuBar>
+		<subMenu id="my_submenu">
+		  <label>Carbon Pipeline</label>
+		<scriptItem>
+			<label>Launch Project</label>
+			<scriptCode>
+<![CDATA[
+import pipeline.houdini_tools
+pipeline.houdini_tools.HoudiniProjectLauncher()
+]]>
+			</scriptCode>
+		</scriptItem>
+		<scriptItem>
+			<label>Import</label>
+			<scriptCode>
+<![CDATA[
+import pipeline.houdini_tools
+pipeline.houdini_tools.HoudiniImporter()
+]]>
+			</scriptCode>
+		</scriptItem>
+		<scriptItem>
+			<label>Save</label>
+			<scriptCode>
+<![CDATA[
+import pipeline.houdini_tools
+pipeline.houdini_tools.HoudiniSaver()
+]]>
+			</scriptCode>
+		</scriptItem>
+		<scriptItem>
+			<label>Version Up</label>
+			<scriptCode>
+<![CDATA[
+import pipeline.houdini_tools
+pipeline.houdini_tools.version_up()
+]]>
+			</scriptCode>
+		</scriptItem>
+		</subMenu>
+	</menuBar>
+<!-- 	<addScriptItem id="h.deadline">
+		<parent>render_menu</parent>
+		<label>Submit To Deadline</label>
+		<scriptPath>$HFS/houdini/scripts/deadline/DeadlineHoudiniClient.py</scriptPath>
+		<scriptArgs></scriptArgs>
+		<insertAfter/>
+	</addScriptItem> -->
+</mainMenu>
