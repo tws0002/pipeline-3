@@ -39,15 +39,23 @@ class ConfigReader:
 		templateTokens = self.findTokens(templateString)
 		formatedTemplateString = templateString
 		for token in templateTokens:
-			if token in self.tokenList and  self.tokenList.get(token):
+			if token in tokenDict and tokenDict.get(token):
 				tokenSyntax = "<" + token + ">"
 				# print("trying to replace " + token + " of this syntax: " + tokenSyntax + " with " + self.tokenList.get(token))
 				# print("first it's this: " + templateString)
-				formatedTemplateString = formatedTemplateString.replace(tokenSyntax, self.tokenList.get(token))
+				formatedTemplateString = formatedTemplateString.replace(tokenSyntax, tokenDict.get(token))
 			else:
-				raise ValueError("Missing token: " + token)
-		# If there are still unreplaced tokens in the path, recursively replace them
-		if self.findTokens(formatedTemplateString):
+				pass
+				# raise ValueError("Missing token: " + token)
+		# If there are still unreplaced tokens in the tokenDict, in the path, recursively replace them
+		remaining_tokens = self.findTokens(formatedTemplateString)
+
+		more_left = False
+		for remaining_token in remaining_tokens:
+			if remaining_token in tokenDict:
+				more_left = True
+		
+		if more_left:
 			formatedTemplateString = self.replaceTokens(formatedTemplateString, tokenDict)
 
 		# Fix path separators:
@@ -93,21 +101,25 @@ class ConfigReader:
 
 		self.tokenList = self.mergeDicts(self.getGlobals(), tokenDict)
 
+		templateString = self.replaceTokens(templateString, self.getGlobals())
+
 		if (destinationToken != None):
 			destinationToken = "<" + destinationToken + ">"
 			tokenIndex = templateString.find(destinationToken)
 			templateString = templateString[:tokenIndex]
 
-		return self.replaceTokens(templateString, tokenDict)
+		templateString = self.replaceTokens(templateString, self.tokenList)
+
+		print("Path: " + templateString)
+		return templateString
 
 	def getTokens(self, templateString):
 		"""Returns a list of tokens in the given template minus the job path which is defined when configReader is created"""
+		# First, expand the template string with all the globals
+		templateString = self.replaceTokens(templateString, self.getGlobals())
 		tokens = self.findTokens(templateString)
 		if JOB_PATH_TOKEN in tokens:
 			tokens.remove(JOB_PATH_TOKEN)
-		for token in self.getGlobals():
-			if token in tokens:
-				tokens.remove(token)
 		return tokens
 
 
@@ -197,7 +209,7 @@ if __name__== '__main__':
 	tokens["shot"] = "wow_such_shot"
 	template = "nuke_projects"
 	software = "nuke"
-	profile = 'assets'
+	profile = 'shots'
 
 	configReader = ConfigReader("V:/Jobs/XXXXXX_carbon_testJob4")
 
