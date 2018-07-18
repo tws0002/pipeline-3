@@ -66,7 +66,7 @@ class ConfigReader:
 		try:
 			return self.config['globals']
 		except:
-			return None
+			return dict()
 
 	def getNameProfileTemplate(self, profile, software=None):
 		""" Returns the template for a name if it exists in globals or a software override. """
@@ -105,6 +105,9 @@ class ConfigReader:
 		tokens = self.findTokens(templateString)
 		if JOB_PATH_TOKEN in tokens:
 			tokens.remove(JOB_PATH_TOKEN)
+		for token in self.getGlobals():
+			if token in tokens:
+				tokens.remove(token)
 		return tokens
 
 
