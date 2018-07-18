@@ -16,8 +16,6 @@ class ConfigReader:
 		else:
 			self.configPath = os.path.join(config_path)
 		self.config = self.readConfig(self.configPath)
-		self.tokenList = dict()
-		self.tokenList['job_path'] = job_path
 
 	def mergeDicts(self, x, y):
 		"""Merges two dictionarys. Overwrites values of the first dictionary with the second. """
@@ -96,10 +94,9 @@ class ConfigReader:
 
 	def getPath(self, templateString, tokenDict, destinationToken=None):
 		"""Attempts to return the path to an optional destinationToken from the template and a dictionary of tokens"""
-		self.tokenList = tokenDict
-		self.tokenList['job_path'] = self.job_path
+		tokenDict['job_path'] = self.job_path
 
-		self.tokenList = self.mergeDicts(self.getGlobals(), tokenDict)
+		tokenDict = self.mergeDicts(self.getGlobals(), tokenDict)
 
 		templateString = self.replaceTokens(templateString, self.getGlobals())
 
@@ -108,9 +105,8 @@ class ConfigReader:
 			tokenIndex = templateString.find(destinationToken)
 			templateString = templateString[:tokenIndex]
 
-		templateString = self.replaceTokens(templateString, self.tokenList)
+		templateString = self.replaceTokens(templateString, tokenDict)
 
-		print("Path: " + templateString)
 		return templateString
 
 	def getTokens(self, templateString):
@@ -213,7 +209,7 @@ if __name__== '__main__':
 
 	configReader = ConfigReader("V:/Jobs/XXXXXX_carbon_testJob4")
 
-	# print(configReader.getNameProfileTemplate('assets'))
+	print(configReader.getNameProfileTemplate('assets'))
 	print(configReader.getPath(configReader.getProfileTemplate(software, profile), tokens))
 
 	# print(configReader.mergeDicts({'a':'1','b':'1'},{'a':'a','b':'b','c':'c'}))
