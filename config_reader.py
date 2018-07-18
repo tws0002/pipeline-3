@@ -20,7 +20,7 @@ class ConfigReader:
 		self.tokenList['job_path'] = job_path
 
 	def mergeDicts(self, x, y):
-		"""Merges two dictionarys"""
+		"""Merges two dictionarys. Overwrites values of the first dictionary with the second. """
 		z = x.copy()
 		z.update(y)
 		return z
@@ -36,7 +36,6 @@ class ConfigReader:
 
 	def replaceTokens(self, templateString, tokenDict):
 		"""Takes a templateString and attempts to create a path with a dictionary of tokens and values"""
-
 		templateTokens = self.findTokens(templateString)
 		formatedTemplateString = templateString
 		for token in templateTokens:
@@ -47,6 +46,10 @@ class ConfigReader:
 				formatedTemplateString = formatedTemplateString.replace(tokenSyntax, self.tokenList.get(token))
 			else:
 				raise ValueError("Missing token: " + token)
+		# If there are still unreplaced tokens in the path, recursively replace them
+		if self.findTokens(formatedTemplateString):
+			formatedTemplateString = self.replaceTokens(formatedTemplateString, tokenDict)
+
 		# Fix path separators:
 		pathList = formatedTemplateString.split("/")
 		finalPath = ""
@@ -55,13 +58,40 @@ class ConfigReader:
 				finalPath = directory
 			elif pathList.index(directory) >= 0:
 				finalPath = os.path.join(finalPath, directory)
+
 		return finalPath
+
+	def getGlobals(self):
+		""" Returns a dictionary of global variables. """
+		try:
+			return self.config['globals']
+		except:
+			return None
+
+	def getNameProfileTemplate(self, profile, software=None):
+		""" Returns the template for a name if it exists in globals or a software override. """
+		name_template = ''
+		if 'name_profiles' in self.getGlobals():
+			name_profiles = self.getGlobals()['name_profiles']
+			try: 
+				name_template = name_profiles[profile]
+			except:
+				pass
+		if software and 'name_profiles' in self.getSoftwareConfig(software):
+			name_profiles = self.getSoftwareConfig(software)['name_profiles']
+			try:
+				name_template = name_profiles[profile]
+			except:
+				pass
+		return name_template
+			
 
 	def getPath(self, templateString, tokenDict, destinationToken=None):
 		"""Attempts to return the path to an optional destinationToken from the template and a dictionary of tokens"""
 		self.tokenList = tokenDict
 		self.tokenList['job_path'] = self.job_path
 
+		self.tokenList = self.mergeDicts(self.getGlobals(), tokenDict)
 
 		if (destinationToken != None):
 			destinationToken = "<" + destinationToken + ">"
@@ -97,6 +127,7 @@ class ConfigReader:
 		return tokenList
 
 	def getSoftwareConfig(self, software):
+		""" Returns the config dictionary for the given software. """
 		softwareConfig = dict()
 		try: 
 			softwareConfig = self.config['software'][software]
@@ -156,23 +187,18 @@ class ConfigReader:
 
 # DEBUG ------------------------------------------------------------------------------------------------------
 
-# if __name__== '__main__':
-# 	tokens = dict()
-# 	tokens["job_path"] = "V:/Jobs/XXXXXX_thompsona_testJob"
-# 	tokens["spot"] = "cool_spot"
-# 	tokens["shot"] = "wow_such_shot"
-# 	template = "nuke_projects"
-# 	software = "nuke"
+if __name__== '__main__':
+	tokens = dict()
+	tokens["job_path"] = "V:/Jobs/XXXXXX_carbon_testJob4"
+	tokens["spot"] = "cool_spot"
+	tokens["shot"] = "wow_such_shot"
+	template = "nuke_projects"
+	software = "nuke"
+	profile = 'assets'
 
-# 	configReader = ConfigReader("V:/Jobs/XXXXXX_thompsona_testJob")
+	configReader = ConfigReader("V:/Jobs/XXXXXX_carbon_testJob4")
 
-# 	try:
-# 		templateString = configReader.getProfileTemplate(software, 'projects')
-# 		fullPath = configReader.getPath(templateString, tokens)
-# 		print(fullPath)
-# 		print(configReader.getTokens(templateString))
-# 		print(configReader.getExtensions(software))
-# 		print(configReader.getLauncherProfiles(software))
-# 		print(configReader.getProfileTemplate(software, 'projects'))
-# 	except ValueError as e:
-# 		print(e)
+	# print(configReader.getNameProfileTemplate('assets'))
+	print(configReader.getPath(configReader.getProfileTemplate(software, profile), tokens))
+
+	# print(configReader.mergeDicts({'a':'1','b':'1'},{'a':'a','b':'b','c':'c'}))
