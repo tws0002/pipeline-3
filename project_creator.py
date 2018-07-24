@@ -8,6 +8,7 @@ import distutils.dir_util
 from shutil import copyfile
 
 def createProject(configReader, templateString, tokenDict, software, fileName):
+	""" Creates the necessary folders and a project file. Returns the path to the file created. """
 	# templateString = configReader.getProfileTemplate(software, profile)
 	print(configReader.getPath(templateString, tokenDict))
 	tokenList = configReader.findTokens(templateString)
@@ -41,6 +42,8 @@ def createProject(configReader, templateString, tokenDict, software, fileName):
 	newFilePath = os.path.join(configReader.getPath(templateString, tokenDict), fileName)
 	print("newFilePath = " + newFilePath)
 	copyfile(pathToSoftwareFile, newFilePath)
+
+	return newFilePath
 
 def createToken(configReader, templateString, tokenDict, token, tokenValue=""):
 	if not tokenValue:

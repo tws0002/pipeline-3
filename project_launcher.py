@@ -49,7 +49,7 @@ class ProjectLauncher(navigator.Navigator):
 		# If the file doesn't exist, create it with project_creator
 		if not os.path.isfile(self.finalPath):
 			self.debugMsg("This file doesn't exist! Creating it here: " + self.finalPath)
-			project_creator.createProject(self.configReader, self.template, self.get_token_dict(), self.software, self.file_line_edit.text())
+			self.finalPath = project_creator.createProject(self.configReader, self.template, self.get_token_dict(), self.software, self.file_line_edit.text())
 
 		if self.launchProject(self.finalPath):
 			self.save_recents(write_local_config=True)
