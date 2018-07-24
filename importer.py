@@ -23,7 +23,6 @@ except:
 class Importer(navigator.Navigator):
 
 	def __init__(self, active_window, software):
-		print("hi!")
 		super(Importer, self).__init__(active_window, software)
 		self.load_recents()
 		self.setWindowTitle(self.software.capitalize() + " Importer") 

@@ -7,6 +7,7 @@ import importer
 import project_launcher
 import saver
 import common_tools
+import maya_hooks
 
 import maya.cmds as cmds
 import maya.mel as mel
@@ -30,7 +31,6 @@ WORKSPACE_FILE = "workspace.mel"
 ROOT_TOKENS = ['asset', 'shot']
 
 
-
 class MayaImporter(importer.Importer):
 
 	def __init__(self):
@@ -41,7 +41,6 @@ class MayaImporter(importer.Importer):
 		import_dialog = ImportDialog(QtGuiWidgets.QApplication.activeWindow(), file_path).exec_()
 		# Returns true or false based on the import dialog
 		return import_dialog
-
 
 	def debugMsg(self, msg):
 		print(msg)
@@ -216,6 +215,17 @@ def version_up():
 		cmds.file(save=True)
 
 
+def publish():
+	# Check if file has been modified
+	file_modified = cmds.file(q=True, modified=True)
+	if file_modified and common_tools.file_not_saved_dlg():
+		cmds.file(save=True)
+	if not maya_hooks.publish():
+		print("Publish failed, reverting to previous save.")
+	
+
+
+
 def addMenu():
 	
 	print("Loading Pipeline...")
@@ -233,7 +243,11 @@ def addMenu():
 
 	pm.menuItem(label="Save", command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
 
+	pm.menuItem(divider=True, parent=customMenu)
+
 	pm.menuItem(label="Version Up", command="pipeline.maya_tools.version_up()", parent=customMenu)
+
+	pm.menuItem(label="Publish", command="pipeline.maya_tools.publish()", parent=customMenu)
 
 
 

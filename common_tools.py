@@ -4,6 +4,8 @@
 import os
 import sys
 import re
+import importlib
+import imp
 
 try:
 	# < Nuke 11
@@ -56,7 +58,7 @@ def get_version_int(path):
 		raise
 
 def save_file(path):
-	""" If the file exists it promps the user with a dialog box asking if they would like to replace it. Returns true if they accept, or the file didn't exist in the first place. """
+	""" If the file already exists it asks the user if it can be replaced. Returns true if it can be replaced. """
 	if os.path.isfile(path):
 		ok_button = QtGuiWidgets.QMessageBox.Ok
 		cancel_button = QtGuiWidgets.QMessageBox.Cancel
@@ -76,6 +78,25 @@ def save_file(path):
 	else:
 		return True
 	
+
+def file_not_saved_dlg():
+	""" Open this dialog if the file has unsaved changes. Returns true or false if the user wants to save. """
+	ok_button = QtGuiWidgets.QMessageBox.Ok
+	cancel_button = QtGuiWidgets.QMessageBox.Cancel
+
+	msgBox = QtGuiWidgets.QMessageBox()
+	msgBox.setText("File has unsaved changes")
+	msgBox.setInformativeText("There are unsaved changes. Would you like to save the save?")
+	msgBox.setIcon(QtGuiWidgets.QMessageBox.Warning)
+	msgBox.setStandardButtons(ok_button | cancel_button)
+	msgBox.setDefaultButton(ok_button)
+	ret = msgBox.exec_()
+
+	if ret == ok_button:
+		return True
+	else:
+		return False
+
 
 def version_up(path, only_filename=False):
 	""" Given a path this will version up the file and return the incremented path if the file doesn't already exist, or if the user chooses to overwrite the existing file. """
@@ -99,7 +120,16 @@ def version_up(path, only_filename=False):
 		return ''
 		
 
+def get_hooks_module(config_reader, software):
+	pass
+	# hooks_path = config_reader.getHooksPath(software)
+	# hooks_dir = os.path.dirname(hooks_path)
+	# from __future__ import absolute_import
+	# from .hooks_dir import 
+	# sys.path.append(hooks_path)
 
+
+# DEBUGGING------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
 	path = 'V:/Jobs/182276_Essilor_Out_of_Focus/Design/Production/TVC60/Assets/Environments/Gym/model/esof_gym_model_v02.ma'
 	app = QtGuiWidgets.QApplication(sys.argv)

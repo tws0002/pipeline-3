@@ -26,35 +26,37 @@ import project_creator
 
 # Global
 def deleteItemsOfLayout(layout):
-     if layout is not None:
-         while layout.count():
-             item = layout.takeAt(0)
-             widget = item.widget()
-             if widget is not None:
+	 if layout is not None:
+		 while layout.count():
+			item = layout.takeAt(0)
+			widget = item.widget()
+			if widget is not None:
 				widget.setParent(None)
-             else:
-                 deleteItemsOfLayout(item.layout())
+			else:
+				deleteItemsOfLayout(item.layout())
 
 
-DEFAULT_JOBS_DIR = "V:\\Jobs"
-CONFIG_FILE_NAME = "config.yml"
-LOCAL_CONFIG_PATH = os.path.expanduser('~/pipeline_local_config.yml')
+# Constants
+from pipeline_config import DEFAULT_JOBS_DIR
+from pipeline_config import CONFIG_FILE_NAME
+from pipeline_config import LOCAL_CONFIG_PATH
 
 class DeselectableTreeWidget(QtGuiWidgets.QTreeWidget):
-    def mousePressEvent(self, event):
+	def mousePressEvent(self, event):
 		self.clearSelection()
 		QtGuiWidgets.QTreeView.mousePressEvent(self, event)
 
 
 class Navigator(QtGuiWidgets.QDialog):
 
-	def __init__(self, activeWindow, software):
+	def __init__(self, activeWindow, software, extensions=[]):
 		super(Navigator, self).__init__(activeWindow)
 		self.software = software
 		self.token_obj_dict = OrderedDict()
 		self.jobs_dir = DEFAULT_JOBS_DIR
 		self.current_job_path = ""
-		self.extensions = []
+		# Override self.extensions to set what files to list
+		self.extensions = extensions
 		self.template = ""
 		self.finalPath = ""
 		self.configReader = None
@@ -178,7 +180,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 			# check software support for current job
 			if self.configReader.checkSoftwareSupport(self.software):
-				self.extensions = self.get_extensions()
+				# self.extensions = self.get_extensions()
 				self.populate_profiles()
 			else:
 				self.clear_window()
@@ -354,7 +356,12 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def build_file_tree(self, path, tree):
 		""" Finds all files and folders in the given path and adds it to the tree under the given tree item """
-		list_dir = os.listdir(path)
+		# If self.extensions is not empty, search only for files that end in those extensions, otherwise list everything
+		if self.extensions:
+			list_dir = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path,name)) or name.lower().endswith(tuple(self.extensions))]
+		else:
+			list_dir = os.listdir(path)
+
 		for element in list_dir:
 			path_info = os.path.join(path, element)
 			date = time.strftime('%m/%d/%y %H:%M',  time.localtime(os.path.getmtime(path_info)))
@@ -498,7 +505,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		newConfig = self.read_local_config()
 		newConfig[self.software] = recentOption
 		with open(LOCAL_CONFIG_PATH, 'w') as outfile:
-		    yaml.dump(newConfig, outfile, default_flow_style=False)
+			yaml.dump(newConfig, outfile, default_flow_style=False)
 
 class Token():
 

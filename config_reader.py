@@ -5,14 +5,14 @@ import yaml
 import os
 
 JOB_PATH_TOKEN = "job_path"
+from pipeline_config import CONFIG_FILE_NAME
 class ConfigReader:
 
 	def __init__(self, job_path, config_path=None):
 		"""Initialize configReader class with a path to the root of the job"""
 		self.job_path = job_path
-		self.ymlFileName = "config.yml"
 		if config_path is None:
-			self.configPath = os.path.join(self.job_path, self.ymlFileName)
+			self.configPath = os.path.join(self.job_path, CONFIG_FILE_NAME)
 		else:
 			self.configPath = os.path.join(config_path)
 		self.config = self.readConfig(self.configPath)
@@ -45,15 +45,19 @@ class ConfigReader:
 			else:
 				pass
 				# raise ValueError("Missing token: " + token)
+
 		# If there are still unreplaced tokens in the tokenDict, in the path, recursively replace them
 		remaining_tokens = self.findTokens(formatedTemplateString)
 
-		more_left = False
-		for remaining_token in remaining_tokens:
-			if remaining_token in tokenDict:
-				more_left = True
 		
-		if more_left:
+		# more_left = False
+		# for remaining_token in remaining_tokens:
+		# 	if remaining_token in tokenDict:
+		# 		more_left = True
+		
+		# Check if any of the remaining tokens exist in tokenDict and are not empty
+		non_empty_token_dict = {token:value for (token,value) in tokenDict.items() if value}
+		if any(x in remaining_tokens for x in non_empty_token_dict):
 			formatedTemplateString = self.replaceTokens(formatedTemplateString, tokenDict)
 
 		# Fix path separators:
@@ -91,6 +95,13 @@ class ConfigReader:
 				pass
 		return name_template
 			
+
+	def getName(self, profile, tokenDict, software=None, ver="001"):
+		name_template = self.getNameProfileTemplate(profile, software)
+		tokenDict["ver"] = "v"+ver
+		tokenDict = self.mergeDicts(self.getGlobals(), tokenDict)
+		name = self.replaceTokens(name_template, tokenDict)
+		return name
 
 	def getPath(self, templateString, tokenDict, destinationToken=None):
 		"""Attempts to return the path to an optional destinationToken from the template and a dictionary of tokens"""
@@ -173,6 +184,13 @@ class ConfigReader:
 
 		return extensions
 
+	def getHooksPath(self, software):
+		try: 
+			hook_path = self.getSoftwareConfig(software)['hooks']
+			return hook_path
+		except:
+			return ''
+		
 	def getProfileTemplate(self, software, profile):
 		profileTemplate = self.getLauncherProfiles(software)[profile]
 		return profileTemplate
@@ -202,7 +220,8 @@ if __name__== '__main__':
 	tokens = dict()
 	tokens["job_path"] = "V:/Jobs/XXXXXX_carbon_testJob4"
 	tokens["spot"] = "cool_spot"
-	tokens["shot"] = "wow_such_shot"
+	tokens["shot"] = "shot01"
+	tokens["step"] = "modeling"
 	template = "nuke_projects"
 	software = "nuke"
 	profile = 'shots'
@@ -210,6 +229,7 @@ if __name__== '__main__':
 	configReader = ConfigReader("V:/Jobs/XXXXXX_carbon_testJob4")
 
 	print(configReader.getNameProfileTemplate('assets'))
+	print(configReader.getName(profile,tokens, ver="001"))
 	print(configReader.getPath(configReader.getProfileTemplate(software, profile), tokens))
 
 	# print(configReader.mergeDicts({'a':'1','b':'1'},{'a':'a','b':'b','c':'c'}))

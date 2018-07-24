@@ -26,6 +26,8 @@ class ProjectLauncher(navigator.Navigator):
 	def __init__(self, active_window, software):
 		print("hi!")
 		super(ProjectLauncher, self).__init__(active_window, software)
+		self.extensions = self.configReader.getExtensions(software)
+		print(self.extensions)
 		self.load_recents(read_local_config=True)
 		self.setWindowTitle(self.software.capitalize() + " Project Launcher") 
 		self.debugMsg("Starting project launcher...")
