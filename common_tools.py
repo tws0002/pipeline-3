@@ -21,7 +21,7 @@ except:
 	import PySide2.QtUiTools as QtUiTools
 
 
-REG_VERSION_PATTERN = r'(?<=_v)\d+'
+REG_VERSION_PATTERN = r'(?<=(?i)_v)\d+'
 
 def increment_version(path):
 	""" Attempts to increment all the instances of a version number in the provided path.  """
@@ -81,12 +81,12 @@ def save_file(path):
 
 def file_not_saved_dlg():
 	""" Open this dialog if the file has unsaved changes. Returns true or false if the user wants to save. """
-	ok_button = QtGuiWidgets.QMessageBox.Ok
+	save_button = QtGuiWidgets.QMessageBox.Save
 	cancel_button = QtGuiWidgets.QMessageBox.Cancel
 
 	msgBox = QtGuiWidgets.QMessageBox()
 	msgBox.setText("File has unsaved changes")
-	msgBox.setInformativeText("There are unsaved changes. Would you like to save the save?")
+	msgBox.setInformativeText("Cannot continue with unsaved changes. Would you like to save the current file?")
 	msgBox.setIcon(QtGuiWidgets.QMessageBox.Warning)
 	msgBox.setStandardButtons(ok_button | cancel_button)
 	msgBox.setDefaultButton(ok_button)
@@ -131,7 +131,7 @@ def get_hooks_module(config_reader, software):
 
 # DEBUGGING------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
-	path = 'V:/Jobs/182276_Essilor_Out_of_Focus/Design/Production/TVC60/Assets/Environments/Gym/model/esof_gym_model_v02.ma'
+	path = 'V:/Jobs/182276_Essilor_Out_of_Focus/Design/Production/TVC60/Assets/Environments/Gym/model/esof_gym_model_V02.ma'
 	app = QtGuiWidgets.QApplication(sys.argv)
 	print(version_up(path))
 	# print(get_version_str(path, False))
