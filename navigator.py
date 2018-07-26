@@ -46,6 +46,11 @@ class DeselectableTreeWidget(QtGuiWidgets.QTreeWidget):
 		self.clearSelection()
 		QtGuiWidgets.QTreeView.mousePressEvent(self, event)
 
+class QHLine(QtGuiWidgets.QFrame):
+	def __init__(self):
+		super(QHLine, self).__init__()
+		self.setFrameShape(QtGuiWidgets.QFrame.HLine)
+		self.setFrameShadow(QtGuiWidgets.QFrame.Sunken)
 
 class Navigator(QtGuiWidgets.QDialog):
 
@@ -62,6 +67,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.configReader = None
 		self.initUI()
 		self.populate_jobs()
+		self.populate_recents()
 		self.show()
 
 	def initUI(self):
@@ -69,12 +75,16 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.jobs_dir_label.setStyleSheet('text-decoration: underline')
 		self.jobs_dir_label.mousePressEvent = self.jobs_dir_label_click
 
+		self.recents_combo = QtGuiWidgets.QComboBox()
+		self.recents_combo.activated[int].connect(self.on_recents_change)
 		self.job_combo = QtGuiWidgets.QComboBox()
 		self.job_combo.activated[str].connect(self.on_job_change)
 		self.profile_combo = QtGuiWidgets.QComboBox()
 		self.profile_combo.activated[str].connect(self.on_profile_change)
 
 		form_layout = QtGuiWidgets.QFormLayout()
+		form_layout.addRow("Recent: ", self.recents_combo)
+		form_layout.addRow('', QHLine())
 		form_layout.addRow("Jobs Dir: ", self.jobs_dir_label)
 		form_layout.addRow("Job: ", self.job_combo)
 		form_layout.addRow("Profile: ", self.profile_combo)
@@ -124,6 +134,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 		self.vbox = QtGuiWidgets.QVBoxLayout()
 		self.vbox.addWidget(form_widget)
+		# self.vbox.addWidget(QHLine())
 		self.vbox.addLayout(self.token_grid)
 		self.vbox.addWidget(self.path_label)
 		self.vbox.addLayout(self.hbox)
@@ -134,7 +145,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 
 	def create_execute_button(self):
-		""" This is a separate function so the button can be placed correctly in the correct order """
+		""" This is a separate function so the button can be placed correctly in the correct order. """
 		execute_button = QtGuiWidgets.QPushButton("Execute")
 		execute_button.setEnabled(False)
 
@@ -142,15 +153,39 @@ class Navigator(QtGuiWidgets.QDialog):
 
 
 	def jobs_dir_label_click(self, click_event):
-		"""Opens folder browser when jobs_dir_label is clicked"""
+		"""Opens folder browser when jobs_dir_label is clicked. """
 		selected_directory = QtGuiWidgets.QFileDialog.getExistingDirectory(dir=os.path.expanduser('~'))
 		if selected_directory:
 			self.jobs_dir = selected_directory
 			self.jobs_dir_label.setText(self.jobs_dir)
 			self.populate_jobs()
 
+	def populate_recents(self):
+		try:
+			recents_list = self.read_local_config()[self.software]
+			# If it's not a list, don't try to load
+			if not isinstance(recents_list, list):
+				return
+		except:
+			recents_list = []
+
+		recents_str_list = []
+		for recent_option in recents_list:
+			recent_config_reader = config_reader.ConfigReader(os.path.join(recent_option['jobs_dir'], recent_option['job']))
+			template_string = recent_config_reader.getProfileTemplate(self.software, recent_option['profile'])
+			token_list = recent_config_reader.getTokens(template_string)
+			recent_str = recent_option['job']
+			for token in token_list:
+				recent_str = recent_str + " / " + recent_option['tokens'][token]
+			recents_str_list.append(recent_str)
+
+		self.recents_combo.addItems(recents_str_list)
+
+	def on_recents_change(self,index):
+		self.load_recents(index=index)
+
 	def populate_jobs(self):
-		"""Look in jobs folder for jobs that contain the config file at root"""
+		""" Look in jobs folder for jobs that contain the config file at root. """
 		jobsList = self.getDirList(self.jobs_dir)
 		jobsList[:] = [job for job in jobsList if os.path.isfile(os.path.join(self.jobs_dir, job, CONFIG_FILE_NAME))]
 		self.job_combo.clear()
@@ -455,7 +490,7 @@ class Navigator(QtGuiWidgets.QDialog):
 			localConfig = {}
 		return localConfig
 
-	def load_recents(self, read_local_config=False):
+	def load_recents(self, index=0, read_local_config=False):
 		"""Tries to load the project from the environment variables and falls back on local config unless read_local_config is explicitly set"""
 		localConfig = self.read_local_config()
 		softwareRecents = dict()
@@ -467,9 +502,12 @@ class Navigator(QtGuiWidgets.QDialog):
 		except:
 			self.debugMsg("No current environment")
 
-		if localConfig and self.software in localConfig:
-			softwareRecents = localConfig[self.software]
-
+		if localConfig and self.software in localConfig and len(localConfig[self.software])>0:
+			try:
+				softwareRecents = localConfig[self.software][index]
+			except:
+				pass
+			
 		if softwareRecents:
 			self.jobs_dir = softwareRecents["jobs_dir"]
 			self.jobs_dir_label.setText(self.jobs_dir)
@@ -489,6 +527,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def save_recents(self, write_local_config=False):
 		"""Saves the project to the software's local config."""
+		# Create Recent Option
 		recentOption = dict()
 		recentOption["jobs_dir"] = str(self.jobs_dir)
 		recentOption["job"] = str(self.job_combo.currentText())
@@ -496,14 +535,32 @@ class Navigator(QtGuiWidgets.QDialog):
 		tokenDict = dict()
 		for token, token_obj in self.token_obj_dict.iteritems():
 			tokenDict[str(token)] = str(token_obj.get_current())
-
 		recentOption["tokens"] = tokenDict
+
 
 		for recent, value in recentOption.iteritems():
 			os.environ[recent] = str(value)
 
 		newConfig = self.read_local_config()
-		newConfig[self.software] = recentOption
+
+		# Ensure the software is in the config
+		try:
+			recents_list = newConfig[self.software]
+		except:
+			recents_list = []
+
+		# Backwards compatibility
+		if not isinstance(recents_list, list):
+			recents_list=[]
+
+		# If it already exists in the list, remove it
+		if recentOption in recents_list: recents_list.remove(recentOption)
+		# Add to the beginning of the list
+		recents_list.insert(0, recentOption)
+		# Restrict list length to 10
+		recents_list = recents_list[:10]
+		
+		newConfig[self.software] = recents_list
 		with open(LOCAL_CONFIG_PATH, 'w') as outfile:
 			yaml.dump(newConfig, outfile, default_flow_style=False)
 

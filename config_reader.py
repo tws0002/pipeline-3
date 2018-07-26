@@ -49,12 +49,6 @@ class ConfigReader:
 		# If there are still unreplaced tokens in the tokenDict, in the path, recursively replace them
 		remaining_tokens = self.findTokens(formatedTemplateString)
 
-		
-		# more_left = False
-		# for remaining_token in remaining_tokens:
-		# 	if remaining_token in tokenDict:
-		# 		more_left = True
-		
 		# Check if any of the remaining tokens exist in tokenDict and are not empty
 		non_empty_token_dict = {token:value for (token,value) in tokenDict.items() if value}
 		if any(x in remaining_tokens for x in non_empty_token_dict):
@@ -176,6 +170,7 @@ class ConfigReader:
 		return launcher_profiles
 
 	def getExtensions(self, software):
+		""" Returns a list of extensions associated with the given software. """
 		extensions = []
 		try: 
 			extensions = self.getSoftwareConfig(software)['extensions']
@@ -209,6 +204,7 @@ class ConfigReader:
 		return self.getPath(path, {})
 
 	def getConfigPath(self):
+		""" Returns the full path to the configuration file. """
 		return self.configPath
 
 	def sayHello(self):

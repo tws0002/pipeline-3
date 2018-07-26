@@ -6,8 +6,11 @@ import os
 import importer
 import project_launcher
 import saver
+import publisher
+import environment
 import common_tools
 import maya_hooks
+
 
 import maya.cmds as cmds
 import maya.mel as mel
@@ -216,13 +219,21 @@ def version_up():
 
 
 def publish():
-	# Check if file has been modified
-	file_modified = cmds.file(q=True, modified=True)
-	if file_modified and common_tools.file_not_saved_dlg():
-		cmds.file(save=True)
-	if not maya_hooks.publish():
-		print("Publish failed, reverting to previous save.")
-	
+	# First, check that the current evironment is valid
+	if environment.is_valid(software='maya'):
+		# Check if file has been modified
+		file_modified = cmds.file(q=True, modified=True)
+		if file_modified and common_tools.file_not_saved_dlg():
+			cmds.file(save=True)
+		env_config_reader = environment.get_config_reader()
+		profile = environment.get_profile()
+		
+		if maya_hooks.publish():
+			pass
+		else:
+			print("Publish failed, reverting to previous save.")
+	else:
+		print("Environment is not valid!")
 
 
 
