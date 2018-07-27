@@ -23,6 +23,7 @@ except:
 
 import config_reader
 import project_creator
+import software_tools
 
 # Global
 def deleteItemsOfLayout(layout):
@@ -52,7 +53,7 @@ class QHLine(QtGuiWidgets.QFrame):
 		self.setFrameShape(QtGuiWidgets.QFrame.HLine)
 		self.setFrameShadow(QtGuiWidgets.QFrame.Sunken)
 
-class Navigator(QtGuiWidgets.QDialog):
+class Navigator(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
 
 	def __init__(self, activeWindow, software, extensions=[]):
 		super(Navigator, self).__init__(activeWindow)
@@ -293,10 +294,6 @@ class Navigator(QtGuiWidgets.QDialog):
 		if ok and new_token:
 			project_creator.createToken(self.configReader, self.template, self.get_token_dict(), token, new_token)
 			self.populate_token(token)
-
-	def debugMsg(self, msg):
-		"""Override this to customize how each software prints debug reports."""
-		print(msg)
 
 
 	def getDirList(self, directory, reverse=False):
@@ -540,6 +537,8 @@ class Navigator(QtGuiWidgets.QDialog):
 
 		for recent, value in recentOption.iteritems():
 			os.environ[recent] = str(value)
+		
+		os.environ['software'] = str(self.software)
 
 		newConfig = self.read_local_config()
 

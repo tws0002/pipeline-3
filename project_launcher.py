@@ -6,6 +6,7 @@ import sys
 
 import navigator
 import project_creator
+import software_tools
 
 try:
 	# < Nuke 11
@@ -21,7 +22,7 @@ except:
 	import PySide2.QtUiTools as QtUiTools
 
 
-class ProjectLauncher(navigator.Navigator):
+class ProjectLauncher(navigator.Navigator, software_tools.SoftwareTools):
 
 	def __init__(self, active_window, software):
 		print("hi!")

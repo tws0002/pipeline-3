@@ -118,7 +118,7 @@ def version_up(path, only_filename=False):
 		return path
 	else:
 		return ''
-		
+
 
 def get_hooks_module(config_reader, software):
 	pass
