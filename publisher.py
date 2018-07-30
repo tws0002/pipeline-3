@@ -16,9 +16,10 @@ except:
 	import PySide2.QtWidgets as QtGuiWidgets
 	import PySide2.QtUiTools as QtUiTools
 
+import software_tools
 
-class Publisher(QtGuiWidgets.QDialog):
-	def __init__(self, software, tools_module):
+class Publisher(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
+	def __init__(self, software):
 		super(Publisher, self).__init__(QtGuiWidgets.QApplication.activeWindow())
 		self.init_ui()
 		self.show()
@@ -48,7 +49,7 @@ class Publisher(QtGuiWidgets.QDialog):
 		if environment.is_valid(software='maya'):
 			# Check if file has been modified
 			file_modified = cmds.file(q=True, modified=True)
-			if file_modified and common_tools.file_not_saved_dlg():
+			if file_modified and self.file_not_saved_dlg():
 				cmds.file(save=True)
 			env_config_reader = environment.get_config_reader()
 			profile = environment.get_profile()
@@ -64,5 +65,5 @@ class Publisher(QtGuiWidgets.QDialog):
 # Debugging -----------------------------------------------
 if __name__== '__main__':
 	app = QtGuiWidgets.QApplication(sys.argv)
-	ex = Publisher(app.activeWindow(), 'maya')
+	ex = Publisher('maya')
 	app.exec_()

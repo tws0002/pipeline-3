@@ -53,11 +53,12 @@ class QHLine(QtGuiWidgets.QFrame):
 		self.setFrameShape(QtGuiWidgets.QFrame.HLine)
 		self.setFrameShadow(QtGuiWidgets.QFrame.Sunken)
 
-class Navigator(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
+class Navigator(QtGuiWidgets.QDialog):
 
-	def __init__(self, activeWindow, software, extensions=[]):
+	def __init__(self, activeWindow, current_software_tools, extensions=[]):
 		super(Navigator, self).__init__(activeWindow)
-		self.software = software
+		self.current_software_tools = current_software_tools
+		self.software = current_software_tools.software
 		self.token_obj_dict = OrderedDict()
 		self.jobs_dir = DEFAULT_JOBS_DIR
 		self.current_job_path = ""
@@ -220,10 +221,10 @@ class Navigator(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
 				self.populate_profiles()
 			else:
 				self.clear_window()
-				self.debugMsg("Project does not include support for this software")
+				self.current_software_tools.debugMsg("Project does not include support for this software")
 		else:
 			self.clear_window()
-			self.debugMsg("No jobs in this directory")
+			self.current_software_tools.debugMsg("No jobs in this directory")
 
 	def get_extensions(self):
 		return self.configReader.getExtensions(self.software)
@@ -367,7 +368,7 @@ class Navigator(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
 		# 	file_list = self.getFileList(populatePath, self.extensions)
 		# except:
 		# 	file_list = []
-		# # self.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
+		# # self.current_software_tools.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
 		# if len(file_list) > 0:
 		# 	for index, file in enumerate(file_list):
 		# 		current_item = QtGuiWidgets.QListWidgetItem(file, self.file_list_widget)
@@ -497,7 +498,7 @@ class Navigator(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
 			softwareRecents["profile"] = os.environ["profile"]
 			softwareRecents["tokens"] = ast.literal_eval(os.environ["tokens"])
 		except:
-			self.debugMsg("No current environment")
+			self.current_software_tools.debugMsg("No current environment")
 
 		if localConfig and self.software in localConfig and len(localConfig[self.software])>0:
 			try:

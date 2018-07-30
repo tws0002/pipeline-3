@@ -8,7 +8,6 @@ import project_launcher
 import saver
 import publisher
 import environment
-import common_tools
 import maya_hooks
 import software_tools
 
@@ -52,6 +51,10 @@ def addMenu():
 
 
 class MayaTools(software_tools.SoftwareTools):
+
+	def __init__(self):
+		self.software = SOFTWARE
+
 	def debugMsg(self, msg):
 		print('maya is da bomb: ' + msg)
 
@@ -76,7 +79,7 @@ class MayaTools(software_tools.SoftwareTools):
 
 	def version_up(self):
 		print("Trying to version up")
-		new_path = common_tools.version_up(pm.system.sceneName(), only_filename=True)
+		new_path = super(MayaTools, self).version_up(pm.system.sceneName(), only_filename=True)
 		if new_path:
 			cmds.file(rename=new_path)
 			cmds.file(save=True)
@@ -94,10 +97,10 @@ class MayaTools(software_tools.SoftwareTools):
 
 
 class MayaImporter(importer.Importer, MayaTools):
-
 	def __init__(self):
+		self.maya_tools = MayaTools()
 		super(MayaImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya importer...")
+		maya_tools.debugMsg("Starting maya importer...")
 
 	def import_file(self, file_path):
 		import_dialog = ImportDialog(QtGuiWidgets.QApplication.activeWindow(), file_path).exec_()
@@ -106,8 +109,9 @@ class MayaImporter(importer.Importer, MayaTools):
 
 
 class ImportDialog(QtGuiWidgets.QDialog, MayaTools):
-
+	
 	def __init__(self, activeWindow, file_path):
+		self.maya_tools = MayaTools()
 		super(ImportDialog, self).__init__(activeWindow)
 		self.file_path = file_path
 		self.file_name, self.file_ext = os.path.splitext(os.path.basename(file_path))
@@ -184,11 +188,11 @@ class ImportDialog(QtGuiWidgets.QDialog, MayaTools):
 		return flags
 
 
-class MayaProjectLauncher(project_launcher.ProjectLauncher, MayaTools):
-
+class MayaProjectLauncher(project_launcher.ProjectLauncher):
 	def __init__(self):
-		super(MayaProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya project launcher...")
+		self.maya_tools = MayaTools()
+		super(MayaProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)
+		self.maya_tools.debugMsg("Starting maya project launcher...")
 
 	def launchProject(self, filePath):
 		tokenDict = self.get_token_dict()
@@ -198,7 +202,7 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher, MayaTools):
 			self.set_environment(self.configReader, self.template, self.get_token_dict())
 			return True
 		except RuntimeError:
-			self.debugMsg("Hey, this is cool")
+			self.maya_tools.debugMsg("Hey, this is cool")
 			ret = self.fileNotSavedDlg()
 			if ret == QtGuiWidgets.QMessageBox.Save:
 				cmds.file(save=True)
@@ -208,10 +212,10 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher, MayaTools):
 			elif ret == QtGuiWidgets.QMessageBox.Discard:
 			    cmds.file(new=True, force=True) 
 			    cmds.file(filePath, open=True)
-			    self.set_environment(self.configReader, self.template, self.get_token_dict())
+			    self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
 			    return True
 			elif ret == QtGuiWidgets.QMessageBox.Cancel:
-				self.debugMsg("Nevermind...")
+				self.maya_tools.debugMsg("Nevermind...")
 				return False
 
 	def fileNotSavedDlg(self):
@@ -225,9 +229,11 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher, MayaTools):
 
 
 class MayaSaver(saver.Saver, MayaTools):
+	
 	def __init__(self):
+		self.maya_tools = MayaTools()
 		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya saver...")
+		self.maya_tools.debugMsg("Starting maya saver...")
 
 	def save_file(self, file_path):
 

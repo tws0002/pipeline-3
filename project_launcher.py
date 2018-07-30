@@ -22,20 +22,19 @@ except:
 	import PySide2.QtUiTools as QtUiTools
 
 
-class ProjectLauncher(navigator.Navigator, software_tools.SoftwareTools):
+class ProjectLauncher(navigator.Navigator):
 
-	def __init__(self, active_window, software):
-		print("hi!")
-		super(ProjectLauncher, self).__init__(active_window, software)
-		self.extensions = self.configReader.getExtensions(software)
+	def __init__(self, active_window, current_software_tools):
+		super(ProjectLauncher, self).__init__(active_window, current_software_tools)
+		self.extensions = self.configReader.getExtensions(current_software_tools.software)
 		print(self.extensions)
 		self.load_recents(read_local_config=True)
 		self.setWindowTitle(self.software.capitalize() + " Project Launcher") 
-		self.debugMsg("Starting project launcher...")
+		self.current_software_tools.debugMsg("Starting project launcher...")
 	
 	def launchProject(self, filePath):
 		"""Just a placeholder. Should be overridden by child."""
-		self.debugMsg("Here we go!")
+		self.current_software_tools.debugMsg("Here we go!")
 		return True
 
 	def create_execute_button(self):
@@ -51,7 +50,7 @@ class ProjectLauncher(navigator.Navigator, software_tools.SoftwareTools):
 
 		# If the file doesn't exist, create it with project_creator
 		if not os.path.isfile(self.finalPath):
-			self.debugMsg("This file doesn't exist! Creating it here: " + self.finalPath)
+			self.current_software_tools.debugMsg("This file doesn't exist! Creating it here: " + self.finalPath)
 			project_creator.createProject(self.configReader, self.template, self.get_token_dict(), self.software, self.file_line_edit.text())
 
 		if self.launchProject(self.finalPath):
@@ -60,6 +59,8 @@ class ProjectLauncher(navigator.Navigator, software_tools.SoftwareTools):
 
 # Debugging -----------------------------------------------
 if __name__== '__main__':
+	import maya_tools
+	soft_tools = maya_tools.MayaTools()
 	app = QtGuiWidgets.QApplication(sys.argv)
-	ex = ProjectLauncher(app.activeWindow(), 'maya')
+	ex = ProjectLauncher(app.activeWindow(), soft_tools)
 	app.exec_()
