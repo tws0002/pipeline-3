@@ -18,9 +18,10 @@ except:
 
 import software_tools
 
-class Publisher(QtGuiWidgets.QDialog, software_tools.SoftwareTools):
-	def __init__(self, software):
+class Publisher(QtGuiWidgets.QDialog):
+	def __init__(self, current_software_tools):
 		super(Publisher, self).__init__(QtGuiWidgets.QApplication.activeWindow())
+		self.current_software_tools = current_software_tools
 		self.init_ui()
 		self.show()
 

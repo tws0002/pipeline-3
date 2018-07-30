@@ -22,11 +22,12 @@ except:
 
 class Saver(navigator.Navigator):
 
-	def __init__(self, active_window, software):
-		super(Saver, self).__init__(active_window, software)
+	def __init__(self, active_window, current_software_tools):
+		super(Saver, self).__init__(active_window, current_software_tools)
+		self.current_software_tools = current_software_tools
 		self.load_recents()
 		self.setWindowTitle(self.software.capitalize() + " Saver") 
-		self.debugMsg("Starting saver...")
+		self.current_software_tools.debugMsg("Starting saver...")
 	
 	def create_execute_button(self):
 		execute_button = QtGuiWidgets.QPushButton("Save")
@@ -35,7 +36,7 @@ class Saver(navigator.Navigator):
 		return execute_button
 
 	def on_save_click(self):
-		self.debugMsg("Trying to save project")
+		self.current_software_tools.debugMsg("Trying to save project")
 		"""Called when the save button is clicked. Attempts to save file with child's 'save_file' function."""
 		currentPath = self.configReader.getPath(self.template, self.get_token_dict())
 		self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
@@ -59,7 +60,7 @@ class Saver(navigator.Navigator):
 
 	def save_file(self, file_path):
 		"""Just a placeholder. Should be overridden by child."""
-		self.debugMsg("Saving!")
+		self.current_software_tools.debugMsg("Saving!")
 		return True
 
 	def get_extensions(self):

@@ -99,8 +99,8 @@ class MayaTools(software_tools.SoftwareTools):
 class MayaImporter(importer.Importer, MayaTools):
 	def __init__(self):
 		self.maya_tools = MayaTools()
-		super(MayaImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		maya_tools.debugMsg("Starting maya importer...")
+		super(MayaImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)
+		self.maya_tools.debugMsg("Starting maya importer...")
 
 	def import_file(self, file_path):
 		import_dialog = ImportDialog(QtGuiWidgets.QApplication.activeWindow(), file_path).exec_()
@@ -108,7 +108,7 @@ class MayaImporter(importer.Importer, MayaTools):
 		return import_dialog
 
 
-class ImportDialog(QtGuiWidgets.QDialog, MayaTools):
+class ImportDialog(QtGuiWidgets.QDialog):
 	
 	def __init__(self, activeWindow, file_path):
 		self.maya_tools = MayaTools()
@@ -228,11 +228,11 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 		return ret
 
 
-class MayaSaver(saver.Saver, MayaTools):
+class MayaSaver(saver.Saver):
 	
 	def __init__(self):
 		self.maya_tools = MayaTools()
-		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
+		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)
 		self.maya_tools.debugMsg("Starting maya saver...")
 
 	def save_file(self, file_path):
@@ -240,7 +240,8 @@ class MayaSaver(saver.Saver, MayaTools):
 		try:
 			cmds.file( rename=file_path)
 			cmds.file(save=True)
-			set_environment(self.configReader, self.template, self.get_token_dict())
+			self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
 			return True
 		except:
+			raise
 			return False
