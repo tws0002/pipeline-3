@@ -97,9 +97,6 @@ class MayaTools(software_tools.SoftwareTools):
 	def get_project_path(self):
 		return pm.system.sceneName()
 
-	def get_software(self):
-		return SOFTWARE
-
 	def is_project_modified(self):
 		return cmds.file(q=True, modified=True)
 

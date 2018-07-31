@@ -84,10 +84,11 @@ class SoftwareTools(object):
 		except:
 			raise
 
-	def version_up(self, path, only_filename=False):
+	def version_up(self, only_filename=False):
 		""" Given a path this will version up the file and return the incremented path if the 
 		file doesn't already exist, or if the user chooses to overwrite the existing file. 
 		"""
+		path = self.get_project_path()
 		directory = os.path.dirname(path)
 		if only_filename:
 			path = os.path.basename(path)
@@ -204,10 +205,10 @@ class SoftwareTools(object):
 		else:
 			self.debugMsg("Environment is not valid!")
 
-	def get_project_path(self):
-		raise NotImplementedError
-
 	def get_software(self):
+		return self.software
+
+	def get_project_path(self):
 		raise NotImplementedError
 
 	def is_project_modified(self):

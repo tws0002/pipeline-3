@@ -8,6 +8,7 @@ import nukescripts
 import project_launcher
 import importer
 import saver
+import software_tools
 
 try:
 	# < Nuke 11
@@ -24,10 +25,39 @@ except:
 
 SOFTWARE = "nuke"
 
+class NukeTools(software_tools.SoftwareTools):
+
+	def __init__(self):
+		self.software = SOFTWARE
+
+	def debugMsg(self, msg):
+		nuke.tprint(msg)
+
+	def _save_as(self, path):
+		try:
+			nuke.scriptSaveAs(filename=path, overwrite=True)
+			return True
+		except:
+			return False
+
+	def _save(self):
+		try:
+			nuke.scriptSaveAs(overwrite=True)
+			return True
+		except:
+			return False
+
+	def get_project_path(self):
+		return nuke.root().name()
+
+	def is_project_modified(self):
+		return nuke.root().modified()
+
 class NukeProjectLauncher(project_launcher.ProjectLauncher):
 
 	def __init__(self):
-		super(NukeProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
+		self.nuke_tools = NukeTools()
+		super(NukeProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 		nuke.tprint(self.configReader.sayHello())
 
 	def launchProject(self, filePath):
@@ -36,13 +66,11 @@ class NukeProjectLauncher(project_launcher.ProjectLauncher):
 		super(NukeProjectLauncher, self).save_recents(write_local_config=True)
 		return True
 
-	def debugMsg(self, msg):
-		nuke.tprint(msg)
-
 class NukeSaver(saver.Saver):
 
 	def __init__(self):
-		super(NukeSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
+		self.nuke_tools = NukeTools()
+		super(NukeSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 		nuke.tprint(self.configReader.sayHello())
 
 	def save_file(self, filePath):
@@ -50,14 +78,12 @@ class NukeSaver(saver.Saver):
 		super(NukeSaver, self).save_recents(write_local_config=True)
 		return True
 
-	def debugMsg(self, msg):
-		nuke.tprint(msg)
-
 
 class NukeImporter(importer.Importer):
 
 	def __init__(self):
-		super(NukeImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
+		self.nuke_tools = NukeTools()
+		super(NukeImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 		nuke.tprint(self.configReader.sayHello())
 
 	def import_file(self, filePath):
@@ -77,6 +103,3 @@ class NukeImporter(importer.Importer):
 			nuke.scriptReadFile(filePath)
 			return True
 		return False
-
-	def debugMsg(self, msg):
-		nuke.tprint(msg)
