@@ -23,43 +23,53 @@ except:
 
 import config_reader
 import project_creator
+import software_tools
 
 # Global
 def deleteItemsOfLayout(layout):
-     if layout is not None:
-         while layout.count():
-             item = layout.takeAt(0)
-             widget = item.widget()
-             if widget is not None:
+	 if layout is not None:
+		 while layout.count():
+			item = layout.takeAt(0)
+			widget = item.widget()
+			if widget is not None:
 				widget.setParent(None)
-             else:
-                 deleteItemsOfLayout(item.layout())
+			else:
+				deleteItemsOfLayout(item.layout())
 
 
-DEFAULT_JOBS_DIR = "V:\\Jobs"
-CONFIG_FILE_NAME = "config.yml"
-LOCAL_CONFIG_PATH = os.path.expanduser('~/pipeline_local_config.yml')
+# Constants
+from pipeline_config import DEFAULT_JOBS_DIR
+from pipeline_config import CONFIG_FILE_NAME
+from pipeline_config import LOCAL_CONFIG_PATH
 
 class DeselectableTreeWidget(QtGuiWidgets.QTreeWidget):
-    def mousePressEvent(self, event):
+	def mousePressEvent(self, event):
 		self.clearSelection()
 		QtGuiWidgets.QTreeView.mousePressEvent(self, event)
 
+class QHLine(QtGuiWidgets.QFrame):
+	def __init__(self):
+		super(QHLine, self).__init__()
+		self.setFrameShape(QtGuiWidgets.QFrame.HLine)
+		self.setFrameShadow(QtGuiWidgets.QFrame.Sunken)
 
 class Navigator(QtGuiWidgets.QDialog):
 
-	def __init__(self, activeWindow, software):
+	def __init__(self, activeWindow, current_software_tools, extensions=[]):
 		super(Navigator, self).__init__(activeWindow)
-		self.software = software
+		self.current_software_tools = current_software_tools
+		self.software = current_software_tools.software
 		self.token_obj_dict = OrderedDict()
 		self.jobs_dir = DEFAULT_JOBS_DIR
 		self.current_job_path = ""
-		self.extensions = []
+		# Override self.extensions to set what files to list
+		self.extensions = extensions
 		self.template = ""
 		self.finalPath = ""
 		self.configReader = None
 		self.initUI()
 		self.populate_jobs()
+		self.populate_recents()
 		self.show()
 
 	def initUI(self):
@@ -67,12 +77,16 @@ class Navigator(QtGuiWidgets.QDialog):
 		self.jobs_dir_label.setStyleSheet('text-decoration: underline')
 		self.jobs_dir_label.mousePressEvent = self.jobs_dir_label_click
 
+		self.recents_combo = QtGuiWidgets.QComboBox()
+		self.recents_combo.activated[int].connect(self.on_recents_change)
 		self.job_combo = QtGuiWidgets.QComboBox()
 		self.job_combo.activated[str].connect(self.on_job_change)
 		self.profile_combo = QtGuiWidgets.QComboBox()
 		self.profile_combo.activated[str].connect(self.on_profile_change)
 
 		form_layout = QtGuiWidgets.QFormLayout()
+		form_layout.addRow("Recent: ", self.recents_combo)
+		form_layout.addRow('', QHLine())
 		form_layout.addRow("Jobs Dir: ", self.jobs_dir_label)
 		form_layout.addRow("Job: ", self.job_combo)
 		form_layout.addRow("Profile: ", self.profile_combo)
@@ -122,6 +136,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 		self.vbox = QtGuiWidgets.QVBoxLayout()
 		self.vbox.addWidget(form_widget)
+		# self.vbox.addWidget(QHLine())
 		self.vbox.addLayout(self.token_grid)
 		self.vbox.addWidget(self.path_label)
 		self.vbox.addLayout(self.hbox)
@@ -132,7 +147,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 
 	def create_execute_button(self):
-		""" This is a separate function so the button can be placed correctly in the correct order """
+		""" This is a separate function so the button can be placed correctly in the correct order. """
 		execute_button = QtGuiWidgets.QPushButton("Execute")
 		execute_button.setEnabled(False)
 
@@ -140,15 +155,39 @@ class Navigator(QtGuiWidgets.QDialog):
 
 
 	def jobs_dir_label_click(self, click_event):
-		"""Opens folder browser when jobs_dir_label is clicked"""
+		"""Opens folder browser when jobs_dir_label is clicked. """
 		selected_directory = QtGuiWidgets.QFileDialog.getExistingDirectory(dir=os.path.expanduser('~'))
 		if selected_directory:
 			self.jobs_dir = selected_directory
 			self.jobs_dir_label.setText(self.jobs_dir)
 			self.populate_jobs()
 
+	def populate_recents(self):
+		try:
+			recents_list = self.read_local_config()[self.software]
+			# If it's not a list, don't try to load
+			if not isinstance(recents_list, list):
+				return
+		except:
+			recents_list = []
+
+		recents_str_list = []
+		for recent_option in recents_list:
+			recent_config_reader = config_reader.ConfigReader(os.path.join(recent_option['jobs_dir'], recent_option['job']))
+			template_string = recent_config_reader.getProfileTemplate(self.software, recent_option['profile'])
+			token_list = recent_config_reader.getTokens(template_string)
+			recent_str = recent_option['job']
+			for token in token_list:
+				recent_str = recent_str + " / " + recent_option['tokens'][token]
+			recents_str_list.append(recent_str)
+
+		self.recents_combo.addItems(recents_str_list)
+
+	def on_recents_change(self,index):
+		self.load_recents(index=index)
+
 	def populate_jobs(self):
-		"""Look in jobs folder for jobs that contain the config file at root"""
+		""" Look in jobs folder for jobs that contain the config file at root. """
 		jobsList = self.getDirList(self.jobs_dir)
 		jobsList[:] = [job for job in jobsList if os.path.isfile(os.path.join(self.jobs_dir, job, CONFIG_FILE_NAME))]
 		self.job_combo.clear()
@@ -178,14 +217,14 @@ class Navigator(QtGuiWidgets.QDialog):
 
 			# check software support for current job
 			if self.configReader.checkSoftwareSupport(self.software):
-				self.extensions = self.get_extensions()
+				# self.extensions = self.get_extensions()
 				self.populate_profiles()
 			else:
 				self.clear_window()
-				self.debugMsg("Project does not include support for this software")
+				self.current_software_tools.debugMsg("Project does not include support for this software")
 		else:
 			self.clear_window()
-			self.debugMsg("No jobs in this directory")
+			self.current_software_tools.debugMsg("No jobs in this directory")
 
 	def get_extensions(self):
 		return self.configReader.getExtensions(self.software)
@@ -256,10 +295,6 @@ class Navigator(QtGuiWidgets.QDialog):
 		if ok and new_token:
 			project_creator.createToken(self.configReader, self.template, self.get_token_dict(), token, new_token)
 			self.populate_token(token)
-
-	def debugMsg(self, msg):
-		"""Override this to customize how each software prints debug reports."""
-		print(msg)
 
 
 	def getDirList(self, directory, reverse=False):
@@ -333,7 +368,7 @@ class Navigator(QtGuiWidgets.QDialog):
 		# 	file_list = self.getFileList(populatePath, self.extensions)
 		# except:
 		# 	file_list = []
-		# # self.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
+		# # self.current_software_tools.debugMsg("Trying to pupulate file box at this location: " + str(populatePath))
 		# if len(file_list) > 0:
 		# 	for index, file in enumerate(file_list):
 		# 		current_item = QtGuiWidgets.QListWidgetItem(file, self.file_list_widget)
@@ -354,7 +389,12 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def build_file_tree(self, path, tree):
 		""" Finds all files and folders in the given path and adds it to the tree under the given tree item """
-		list_dir = os.listdir(path)
+		# If self.extensions is not empty, search only for files that end in those extensions, otherwise list everything
+		if self.extensions:
+			list_dir = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path,name)) or name.lower().endswith(tuple(self.extensions))]
+		else:
+			list_dir = os.listdir(path)
+
 		for element in list_dir:
 			path_info = os.path.join(path, element)
 			date = time.strftime('%m/%d/%y %H:%M',  time.localtime(os.path.getmtime(path_info)))
@@ -448,7 +488,7 @@ class Navigator(QtGuiWidgets.QDialog):
 			localConfig = {}
 		return localConfig
 
-	def load_recents(self, read_local_config=False):
+	def load_recents(self, index=0, read_local_config=False):
 		"""Tries to load the project from the environment variables and falls back on local config unless read_local_config is explicitly set"""
 		localConfig = self.read_local_config()
 		softwareRecents = dict()
@@ -458,11 +498,14 @@ class Navigator(QtGuiWidgets.QDialog):
 			softwareRecents["profile"] = os.environ["profile"]
 			softwareRecents["tokens"] = ast.literal_eval(os.environ["tokens"])
 		except:
-			self.debugMsg("No current environment")
+			self.current_software_tools.debugMsg("No current environment")
 
-		if localConfig and self.software in localConfig:
-			softwareRecents = localConfig[self.software]
-
+		if localConfig and self.software in localConfig and len(localConfig[self.software])>0:
+			try:
+				softwareRecents = localConfig[self.software][index]
+			except:
+				pass
+			
 		if softwareRecents:
 			self.jobs_dir = softwareRecents["jobs_dir"]
 			self.jobs_dir_label.setText(self.jobs_dir)
@@ -482,6 +525,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 	def save_recents(self, write_local_config=False):
 		"""Saves the project to the software's local config."""
+		# Create Recent Option
 		recentOption = dict()
 		recentOption["jobs_dir"] = str(self.jobs_dir)
 		recentOption["job"] = str(self.job_combo.currentText())
@@ -489,16 +533,36 @@ class Navigator(QtGuiWidgets.QDialog):
 		tokenDict = dict()
 		for token, token_obj in self.token_obj_dict.iteritems():
 			tokenDict[str(token)] = str(token_obj.get_current())
-
 		recentOption["tokens"] = tokenDict
+
 
 		for recent, value in recentOption.iteritems():
 			os.environ[recent] = str(value)
+		
+		os.environ['software'] = str(self.software)
 
 		newConfig = self.read_local_config()
-		newConfig[self.software] = recentOption
+
+		# Ensure the software is in the config
+		try:
+			recents_list = newConfig[self.software]
+		except:
+			recents_list = []
+
+		# Backwards compatibility
+		if not isinstance(recents_list, list):
+			recents_list=[]
+
+		# If it already exists in the list, remove it
+		if recentOption in recents_list: recents_list.remove(recentOption)
+		# Add to the beginning of the list
+		recents_list.insert(0, recentOption)
+		# Restrict list length to 10
+		recents_list = recents_list[:10]
+		
+		newConfig[self.software] = recents_list
 		with open(LOCAL_CONFIG_PATH, 'w') as outfile:
-		    yaml.dump(newConfig, outfile, default_flow_style=False)
+			yaml.dump(newConfig, outfile, default_flow_style=False)
 
 class Token():
 

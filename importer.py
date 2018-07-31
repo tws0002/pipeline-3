@@ -22,12 +22,12 @@ except:
 
 class Importer(navigator.Navigator):
 
-	def __init__(self, active_window, software):
-		print("hi!")
-		super(Importer, self).__init__(active_window, software)
+	def __init__(self, active_window, current_software_tools):
+		super(Importer, self).__init__(active_window, current_software_tools)
+		self.current_software_tools = current_software_tools
 		self.load_recents()
 		self.setWindowTitle(self.software.capitalize() + " Importer") 
-		self.debugMsg("Starting importer dodad...")
+		self.current_software_tools.debugMsg("Starting importer dodad...")
 	
 
 	def create_execute_button(self):
@@ -37,7 +37,7 @@ class Importer(navigator.Navigator):
 		return execute_button
 
 	def on_import_click(self):
-		self.debugMsg("Trying to launch project")
+		self.current_software_tools.debugMsg("Trying to launch project")
 		"""Called when the import button is clicked. Attempts to import file with child's 'import_file' function."""
 		currentPath = self.configReader.getPath(self.template, self.get_token_dict())
 		self.finalPath = os.path.join(currentPath, self.file_line_edit.text())
@@ -52,7 +52,7 @@ class Importer(navigator.Navigator):
 
 	def import_file(self, file_path):
 		"""Just a placeholder. Should be overridden by child."""
-		self.debugMsg("Here we go!")
+		self.current_software_tools.debugMsg("Here we go!")
 		return True
 
 	def get_extensions(self):

@@ -6,7 +6,7 @@ import project_launcher
 import importer
 import saver
 
-import common_tools
+import software_tools
 
 import MaxPlus
 
@@ -27,17 +27,49 @@ SOFTWARE = "max"
 WORKSPACE_FILE = "maxWorkspace.mxp"
 ROOT_TOKENS = ['asset', 'shot']
 
+
+class MaxTools(software_tools.SoftwareTools):
+
+	def __init__(self):
+		self.software = SOFTWARE
+
+	def debugMsg(self, msg):
+		print(msg)
+
+	def _save_as(self, path):
+		try:
+			MaxPlus.FileManager.Save(path)
+			return True
+		except:
+			return False
+
+	def _save(self):
+		try:
+			MaxPlus.FileManager.Save()
+			return True
+		except:
+			return False
+
+	def get_project_path(self):
+		return MaxPlus.FileManager.GetFileNameAndPath()
+
+	def is_project_modified(self):
+		return MaxPlus.FileManager.IsSaveRequired()
+
+
 class MaxProjectLauncher(project_launcher.ProjectLauncher):
 
 	def __init__(self):
-		super(MaxProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
+		self.max_tools = MaxTools()
+		super(MaxProjectLauncher, self).__init__(
+			QtGuiWidgets.QApplication.activeWindow(), self.max_tools)
 
 	def launchProject(self, filePath):
 		tokenDict = self.get_token_dict()
-		self.debugMsg("Setting environment variables: ")
+		self.max_tools.debugMsg("Setting environment variables: ")
 		for token in tokenDict:
 			os.environ[token] = tokenDict[token]
-			self.debugMsg(token + " = " + tokenDict[token])
+			self.max_tools.debugMsg(token + " = " + tokenDict[token])
 		# nuke.scriptOpen(filePath)
 
 		fm = MaxPlus.FileManager
@@ -45,15 +77,14 @@ class MaxProjectLauncher(project_launcher.ProjectLauncher):
 		set_environment(self.configReader, self.template, self.get_token_dict())
 		return True
 
-	def debugMsg(self, msg):
-		print(msg)
-
 
 class MaxImporter(importer.Importer):
 
 	def __init__(self):
-		super(MaxImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting max importer...")
+		self.max_tools = MaxTools()
+		super(MaxImporter, self).__init__(
+			QtGuiWidgets.QApplication.activeWindow(), self.max_tools)
+		self.max_tools.debugMsg("Starting max importer...")
 
 	def import_file(self, file_path):
 		root, ext = os.path.splitext(file_path)
@@ -68,14 +99,12 @@ class MaxImporter(importer.Importer):
 		except:
 			return False
 
-	def debugMsg(self, msg):
-		print(msg)
-
-
 class MaxSaver(saver.Saver):
 	def __init__(self):
-		super(MaxSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting max saver...")
+		self.max_tools = MaxTools()
+		super(MaxSaver, self).__init__(
+			QtGuiWidgets.QApplication.activeWindow(), self.max_tools)
+		self.max_tools.debugMsg("Starting max saver...")
 
 	def save_file(self, file_path):
 		fm = MaxPlus.FileManager
@@ -86,11 +115,6 @@ class MaxSaver(saver.Saver):
 		except:
 			return False
 
-	def debugMsg(self, msg):
-		print(msg)
-
-
-
 def set_environment(config_reader, template, token_dict):
 	rootToken = ""
 	for token in token_dict:
@@ -98,7 +122,8 @@ def set_environment(config_reader, template, token_dict):
 			rootToken = token
 
 	debugMsg("The last token is: " + rootToken)
-	path = os.path.join(config_reader.getPath(template, token_dict, rootToken), token_dict[rootToken])
+	path = os.path.join(config_reader.getPath(
+		template, token_dict, rootToken), token_dict[rootToken])
 	filepath = os.path.join(path, WORKSPACE_FILE)
 	filepath = filepath.replace(os.path.sep, '/')
 	debugMsg("Trying to load this workspace: " + path)
@@ -124,11 +149,10 @@ def open_saver():
 	MaxSaver()
 
 def version_up():
-	print("Trying to version up")
-	fm = MaxPlus.FileManager
-	new_path = common_tools.version_up(fm.GetFileNameAndPath(), only_filename=True)
-	if new_path:
-		fm.Save(new_path)
+	MaxTools().version_up()
+
+def publish():
+	MaxTools().publish()
 
 def addMenu():
 	menu_name = u"Carbon Pipeline"
@@ -137,11 +161,16 @@ def addMenu():
 
 	if not MaxPlus.MenuManager.MenuExists(menu_name):
 		mb = MaxPlus.MenuBuilder(menu_name)
-		mb.AddItem(MaxPlus.ActionFactory.Create('Do something', 'Launch Project', open_project_launcher))
-		mb.AddItem(MaxPlus.ActionFactory.Create('Do something', 'Import', open_importer))
+		mb.AddItem(MaxPlus.ActionFactory.Create(
+			'Do something', 'Launch Project', open_project_launcher))
+		mb.AddItem(MaxPlus.ActionFactory.Create(
+			'Do something', 'Import', open_importer))
 		mb.AddItem(MaxPlus.ActionFactory.Create('Do something', 'Save', open_saver))
 		mb.AddSeparator()
-		mb.AddItem(MaxPlus.ActionFactory.Create('Do something', 'Version Up', version_up))
+		mb.AddItem(MaxPlus.ActionFactory.Create(
+			'Do something', 'Version Up', version_up))
+		mb.AddItem(MaxPlus.ActionFactory.Create(
+			'Do something', 'Publish', publish))
 		menu = mb.Create(MaxPlus.MenuManager.GetMainMenu())
 		print 'menu created', menu.Title
 	else:

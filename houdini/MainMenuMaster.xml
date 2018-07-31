@@ -35,7 +35,16 @@ pipeline.houdini_tools.HoudiniSaver()
 			<scriptCode>
 <![CDATA[
 import pipeline.houdini_tools
-pipeline.houdini_tools.version_up()
+pipeline.houdini_tools.HoudiniTools().version_up()
+]]>
+			</scriptCode>
+		</scriptItem>
+		<scriptItem>
+			<label>Publish</label>
+			<scriptCode>
+<![CDATA[
+import pipeline.houdini_tools
+pipeline.houdini_tools.HoudiniTools().publish()
 ]]>
 			</scriptCode>
 		</scriptItem>

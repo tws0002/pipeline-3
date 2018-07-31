@@ -6,7 +6,11 @@ import os
 import importer
 import project_launcher
 import saver
-import common_tools
+import publisher
+import environment
+import maya_hooks
+import software_tools
+
 
 import maya.cmds as cmds
 import maya.mel as mel
@@ -30,12 +34,77 @@ WORKSPACE_FILE = "workspace.mel"
 ROOT_TOKENS = ['asset', 'shot']
 
 
+def addMenu():
+	print("Loading Pipeline...")
+	# Name of the global variable for the Maya window
+	MainMayaWindow = pm.language.melGlobals['gMainWindow']
+	# Build a menu and parent underthe Maya Window
+	customMenu = pm.menu('Carbon Pipeline', parent=MainMayaWindow)
+	# Build a menu item and parent under the 'customMenu'
+	pm.menuItem(label="Launch Project",command="pipeline.maya_tools.MayaProjectLauncher()", parent=customMenu)
+	pm.menuItem(label="Import",command="pipeline.maya_tools.MayaImporter()", parent=customMenu)
+	pm.menuItem(label="Save", command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
+	pm.menuItem(divider=True, parent=customMenu)
+	pm.menuItem(label="Version Up", command="pipeline.maya_tools.MayaTools().version_up()", parent=customMenu)
+	pm.menuItem(label="Publish", command="pipeline.maya_tools.MayaTools().publish()", parent=customMenu)
 
-class MayaImporter(importer.Importer):
+
+
+class MayaTools(software_tools.SoftwareTools):
 
 	def __init__(self):
-		super(MayaImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya importer...")
+		self.software = SOFTWARE
+
+	def debugMsg(self, msg):
+		print('maya is da bomb: ' + msg)
+
+	def set_environment(self, config_reader, template, token_dict):
+		""" Finds if the root is a shot or asset and looks for the WORKSPACE_FILE there. """
+		# Find current root token
+		rootToken = ""
+		for token in token_dict:
+			if token in ROOT_TOKENS:
+				rootToken = token
+
+		self.debugMsg("The last token is: " + rootToken)
+		path = os.path.join(config_reader.getPath(
+			template, token_dict, rootToken), token_dict[rootToken])
+		filepath = os.path.join(path, WORKSPACE_FILE)
+		self.debugMsg("Trying to load this workspace: " + path)
+		if os.path.isfile(filepath):
+			self.debugMsg("Loading this workspace: " + path)
+			cmds.workspace(path, openWorkspace=True)
+		else:
+			self.debugMsg("That's not a valid workspace!")
+
+
+	def _save_as(self, path):
+		try:
+			cmds.file(rename=path)
+			cmds.file(save=True)
+			return True
+		except:
+			return False
+
+	def _save(self):
+		try:
+			cmds.file(save=True)
+			return True
+		except:
+			raise
+			return False
+
+	def get_project_path(self):
+		return pm.system.sceneName()
+
+	def is_project_modified(self):
+		return cmds.file(q=True, modified=True)
+
+class MayaImporter(importer.Importer, MayaTools):
+	def __init__(self):
+		self.maya_tools = MayaTools()
+		super(MayaImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)
+		self.maya_tools.debugMsg("Starting maya importer...")
 
 	def import_file(self, file_path):
 		import_dialog = ImportDialog(QtGuiWidgets.QApplication.activeWindow(), file_path).exec_()
@@ -43,12 +112,10 @@ class MayaImporter(importer.Importer):
 		return import_dialog
 
 
-	def debugMsg(self, msg):
-		print(msg)
-
 class ImportDialog(QtGuiWidgets.QDialog):
-
+	
 	def __init__(self, activeWindow, file_path):
+		self.maya_tools = MayaTools()
 		super(ImportDialog, self).__init__(activeWindow)
 		self.file_path = file_path
 		self.file_name, self.file_ext = os.path.splitext(os.path.basename(file_path))
@@ -126,37 +193,34 @@ class ImportDialog(QtGuiWidgets.QDialog):
 
 
 class MayaProjectLauncher(project_launcher.ProjectLauncher):
-
 	def __init__(self):
-		super(MayaProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya project launcher...")
+		self.maya_tools = MayaTools()
+		super(MayaProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)
+		self.maya_tools.debugMsg("Starting maya project launcher...")
 
 	def launchProject(self, filePath):
 		tokenDict = self.get_token_dict()
 
 		try: 
 			cmds.file(filePath, o=True)
-			set_environment(self.configReader, self.template, self.get_token_dict())
+			self.set_environment(self.configReader, self.template, self.get_token_dict())
 			return True
 		except RuntimeError:
-			self.debugMsg("Hey, this is cool")
+			self.maya_tools.debugMsg("Hey, this is cool")
 			ret = self.fileNotSavedDlg()
 			if ret == QtGuiWidgets.QMessageBox.Save:
 				cmds.file(save=True)
 				cmds.file(filePath, o=True)
-				set_environment(self.configReader, self.template, self.get_token_dict())
+				self.set_environment(self.configReader, self.template, self.get_token_dict())
 				return True
 			elif ret == QtGuiWidgets.QMessageBox.Discard:
 			    cmds.file(new=True, force=True) 
 			    cmds.file(filePath, open=True)
-			    set_environment(self.configReader, self.template, self.get_token_dict())
+			    self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
 			    return True
 			elif ret == QtGuiWidgets.QMessageBox.Cancel:
-				self.debugMsg("Nevermind...")
+				self.maya_tools.debugMsg("Nevermind...")
 				return False
-
-	def debugMsg(self, msg):
-		print(msg)
 
 	def fileNotSavedDlg(self):
 		msgBox = QtGuiWidgets.QMessageBox()
@@ -169,74 +233,19 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 
 class MayaSaver(saver.Saver):
+	
 	def __init__(self):
-		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), SOFTWARE)
-		self.debugMsg("Starting maya saver...")
+		self.maya_tools = MayaTools()
+		super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)
+		self.maya_tools.debugMsg("Starting maya saver...")
 
 	def save_file(self, file_path):
 
 		try:
 			cmds.file( rename=file_path)
 			cmds.file(save=True)
-			set_environment(self.configReader, self.template, self.get_token_dict())
+			self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
 			return True
 		except:
+			raise
 			return False
-
-
-	def debugMsg(self, msg):
-		print(msg)
-
-
-
-def set_environment(config_reader, template, token_dict):
-	""" Finds if the root is a shot or asset and looks for the WORKSPACE_FILE there. """
-	# Find current root token
-	rootToken = ""
-	for token in token_dict:
-		if token in ROOT_TOKENS:
-			rootToken = token
-
-	debugMsg("The last token is: " + rootToken)
-	path = os.path.join(config_reader.getPath(template, token_dict, rootToken), token_dict[rootToken])
-	filepath = os.path.join(path, WORKSPACE_FILE)
-	debugMsg("Trying to load this workspace: " + path)
-	if os.path.isfile(filepath):
-		debugMsg("Loading this workspace: " + path)
-		cmds.workspace(path, openWorkspace=True)
-	else:
-		debugMsg("That's not a valid workspace!")
-
-
-def version_up():
-	print("Trying to version up")
-	new_path = common_tools.version_up(pm.system.sceneName(), only_filename=True)
-	if new_path:
-		cmds.file( rename=new_path)
-		cmds.file(save=True)
-
-
-def addMenu():
-	
-	print("Loading Pipeline...")
-
-	# Name of the global variable for the Maya window
-	MainMayaWindow = pm.language.melGlobals['gMainWindow'] 
-
-	# Build a menu and parent underthe Maya Window
-	customMenu = pm.menu('Carbon Pipeline', parent=MainMayaWindow)
-
-	# Build a menu item and parent under the 'customMenu'
-	pm.menuItem(label="Launch Project", command="pipeline.maya_tools.MayaProjectLauncher()", parent=customMenu)
-
-	pm.menuItem(label="Import", command="pipeline.maya_tools.MayaImporter()", parent=customMenu)
-
-	pm.menuItem(label="Save", command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
-
-	pm.menuItem(label="Version Up", command="pipeline.maya_tools.version_up()", parent=customMenu)
-
-
-
-
-def debugMsg(msg):
-	print(msg)

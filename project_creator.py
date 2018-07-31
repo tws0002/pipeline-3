@@ -46,6 +46,7 @@ def createProject(configReader, templateString, tokenDict, software, fileName):
 	return newFilePath
 
 def createToken(configReader, templateString, tokenDict, token, tokenValue=""):
+	""" Creates a new folder based on the given token. """
 	if not tokenValue:
 		tokenValue = tokenDict[token]
 	pathToToken = os.path.join(configReader.getPath(templateString, tokenDict, token), tokenValue)
