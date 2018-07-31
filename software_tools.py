@@ -184,8 +184,6 @@ class SoftwareTools(object):
 			archive_name = archive_name + '_PUBLISH'
 			archive_name = archive_name + ext
 
-			copyfile(self.get_project_path(), os.path.join(archive_dir, archive_name))
-
 			# Create publish name
 			pub_name = self.create_pub_name(os.path.basename(self.get_project_path()))
 
@@ -201,6 +199,7 @@ class SoftwareTools(object):
 				pub_name = publisher_dlg.get_name()
 				# If a valid name comes back from the dialog, copy it to the publish directory
 				if pub_name:
+					copyfile(self.get_project_path(), os.path.join(archive_dir, archive_name))
 					copyfile(self.get_project_path(), os.path.join(publish_dir, pub_name))
 		else:
 			self.debugMsg("Environment is not valid!")
