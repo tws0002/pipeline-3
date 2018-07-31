@@ -111,8 +111,11 @@ def add_menu():
     assetmenu = menubar.addMenu('Carbon Pipeline')
     assetmenu.addCommand(
         'Project Launcher', 'reload(pipeline.nuke_tools).NukeProjectLauncher()', 'ctrl+shift+o')
-    assetmenu.addCommand('Import', 'reload(pipeline.nuke_tools).NukeImporter()')
-    assetmenu.addCommand('Save', 'reload(pipeline.nuke_tools).NukeSaver()')
+    assetmenu.addCommand(
+        'Import', 'reload(pipeline.nuke_tools).NukeImporter()')
+    assetmenu.addCommand(
+        'Save', 'reload(pipeline.nuke_tools).NukeSaver()')
+    assetmenu.addSeparator()
     assetmenu.addCommand(
         'Version Up', 'pipeline.nuke_tools.NukeTools().version_up()')
     assetmenu.addCommand(

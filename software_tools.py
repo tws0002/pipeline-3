@@ -57,7 +57,7 @@ class SoftwareTools(object):
             first_index = first_index-1
             new_name = name[:first_index] + 'PUBLISH' + name[last_index:]
         else:
-            raise ValueError
+            raise ValueError("More or less than one instance of v### in file name.")
 
         return new_name
 
@@ -102,7 +102,7 @@ class SoftwareTools(object):
         except:
             raise
 
-        # If we previously stripped of the filename, add the path back to the beginning
+        # If we previously stripped off the filename, add the path back to the beginning
         if only_filename and directory:
             path = os.path.join(directory, path)
 
@@ -116,6 +116,7 @@ class SoftwareTools(object):
         if it can be replaced. 
         """
         if os.path.isfile(path):
+            # Create dialog
             ok_button = QtGuiWidgets.QMessageBox.Ok
             cancel_button = QtGuiWidgets.QMessageBox.Cancel
 
@@ -157,7 +158,7 @@ class SoftwareTools(object):
             return False
 
     def publish(self):
-        """ Publishes the current file base on the file name and location """
+        """ Publishes the current file base on the file name and location. """
         # Check that the environment is valid
         if environment.is_valid(software=self.get_software()):
             # Check if the file has been modified
@@ -173,13 +174,6 @@ class SoftwareTools(object):
             archive_dir = os.path.join(proj_dir, 'archive')
             publish_dir = os.path.join(proj_dir, 'publish')
 
-            # Create archive directory if it doesn't exist
-            try:
-                os.makedirs(archive_dir)
-            except OSError:
-                if not os.path.isdir(archive_dir):
-                    raise
-
             # Append 'PUBLISH' to file before archiving it
             archive_name, ext = os.path.splitext(os.path.basename(self.get_project_path()))
             archive_name = archive_name + '_PUBLISH'
@@ -190,17 +184,23 @@ class SoftwareTools(object):
 
             publisher_dlg = publisher.Publisher(publish_dir, pub_name)
             if publisher_dlg.exec_():
-                # Create publish folder if it doesn't exist
-                try:
-                    os.makedirs(publish_dir)
-                except OSError:
-                    if not os.path.isdir(publish_dir):
-                        raise
-
                 pub_name = publisher_dlg.get_name()
                 # If a valid name comes back from the dialog, copy it to the publish directory
                 if pub_name:
+                    # Create archive directory if it doesn't exist
+                    try:
+                        os.makedirs(archive_dir)
+                    except OSError:
+                        if not os.path.isdir(archive_dir):
+                            raise
                     copyfile(self.get_project_path(), os.path.join(archive_dir, archive_name))
+
+                    # Create publish folder if it doesn't exist
+                    try:
+                        os.makedirs(publish_dir)
+                    except OSError:
+                        if not os.path.isdir(publish_dir):
+                            raise
                     copyfile(self.get_project_path(), os.path.join(publish_dir, pub_name))
         else:
             self.debug_msg("Environment is not valid!")

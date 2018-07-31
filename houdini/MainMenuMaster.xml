@@ -30,6 +30,7 @@ pipeline.houdini_tools.HoudiniSaver()
 ]]>
 			</scriptCode>
 		</scriptItem>
+		<separatorItem/>
 		<scriptItem>
 			<label>Version Up</label>
 			<scriptCode>
