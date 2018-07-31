@@ -3,6 +3,7 @@
 
 import os
 import sys
+import ast
 
 import config_reader
 
@@ -39,6 +40,7 @@ def get_token_dict():
     try:
         return ast.literal_eval(os.environ["tokens"])
     except:
+        raise
         return {}
 
 def get_token_value(token):

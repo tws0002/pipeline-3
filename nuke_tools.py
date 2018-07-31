@@ -9,6 +9,8 @@ import project_launcher
 import importer
 import saver
 import software_tools
+from collections import OrderedDict
+import environment
 
 try:
     # < Nuke 11
@@ -53,6 +55,27 @@ class NukeTools(software_tools.SoftwareTools):
     def is_project_modified(self):
         return nuke.root().modified()
 
+    def set_environment(self, config_reader, template, token_dict):
+        # Create a favorite directory for every token in the current template
+        token_path_dict = OrderedDict()
+        token_list = config_reader.get_tokens(template)
+        for token in token_list:
+            path = os.path.join(
+                config_reader.get_path(template, token_dict, token), token_dict[token])
+            self.debug_msg("Creating " + token + " path: " + path)
+            nuke.addFavoriteDir(self.get_favorite_name(token, token_dict[token]), path)
+
+    def get_favorite_name(self, token, token_value):
+        return ("CURRENT " + token.upper())
+        # return (token.capitalize() + ": " + token_value)
+
+    def reset_environment(self):
+        token_dict = environment.get_token_dict()
+        self.debug_msg("token dict: " + str(token_dict))
+        for token in token_dict:
+            favorite_name = self.get_favorite_name(token, token_dict[token])
+            self.debug_msg("removing " + favorite_name)
+            nuke.removeFavoriteDir(favorite_name)
 
 class NukeProjectLauncher(project_launcher.ProjectLauncher):
 
@@ -62,10 +85,15 @@ class NukeProjectLauncher(project_launcher.ProjectLauncher):
             QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 
     def launchProject(self, filePath):
-
-        nuke.scriptOpen(filePath)
-        super(NukeProjectLauncher, self).save_recents(write_local_config=True)
-        return True
+        if nuke.scriptClose():
+            nuke.scriptOpen(filePath)
+            super(NukeProjectLauncher, self).save_recents(write_local_config=True)
+            # self.nuke_tools.reset_environment()
+            self.nuke_tools.set_environment(
+                self.configReader, self.template, self.get_token_dict())
+            return True
+        else:
+            return False
 
 class NukeSaver(saver.Saver):
 
@@ -77,6 +105,8 @@ class NukeSaver(saver.Saver):
     def save_file(self, filePath):
         nuke.scriptSaveAs(filename=filePath, overwrite=True)
         super(NukeSaver, self).save_recents(write_local_config=True)
+        self.nuke_tools.set_environment(
+            self.configReader, self.template, self.get_token_dict())
         return True
 
 

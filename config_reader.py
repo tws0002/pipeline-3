@@ -118,7 +118,7 @@ class ConfigReader:
 
     def get_tokens(self, templateString):
         """Returns a list of tokens in the given template minus the job path which is defined 
-        when configReader is created
+        when configReader is created, and global tokens.
         """
         # First, expand the template string with all the globals
         templateString = self.replace_tokens(templateString, self.get_globals())

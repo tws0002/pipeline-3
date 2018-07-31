@@ -56,6 +56,28 @@ class MaxTools(software_tools.SoftwareTools):
     def is_project_modified(self):
         return MaxPlus.FileManager.IsSaveRequired()
 
+    def set_environment(self, config_reader, template, token_dict):
+        rootToken = ""
+        for token in token_dict:
+            if token in ROOT_TOKENS:
+                rootToken = token
+
+        self.debug_msg("The last token is: " + rootToken)
+        path = os.path.join(config_reader.get_path(
+            template, token_dict, rootToken), token_dict[rootToken])
+        filepath = os.path.join(path, WORKSPACE_FILE)
+        filepath = filepath.replace(os.path.sep, '/')
+        self.debug_msg("Trying to load this workspace: " + path)
+        if os.path.isfile(filepath):
+            self.debug_msg("Loading this workspace: " + path)
+            # Create maxscript to run to load project workspace
+            maxscript = ('pathConfig.load "' + filepath + '"')
+            print("Maxscript to run: " + maxscript)
+            MaxPlus.Core.EvalMAXScript(maxscript)
+        else:
+            self.debug_msg("That's not a file, dummy!")
+
+
 
 class MaxProjectLauncher(project_launcher.ProjectLauncher):
 
@@ -74,7 +96,8 @@ class MaxProjectLauncher(project_launcher.ProjectLauncher):
 
         fm = MaxPlus.FileManager
         fm.Open(filePath)
-        set_environment(self.configReader, self.template, self.get_token_dict())
+        self.max_tools.set_environment(
+            self.configReader, self.template, self.get_token_dict())
         return True
 
 
@@ -110,34 +133,12 @@ class MaxSaver(saver.Saver):
         fm = MaxPlus.FileManager
         try:
             fm.Save(file_path)
-            set_environment(self.configReader, self.template, self.get_token_dict())
+            self.max_tools.set_environment(
+                self.configReader, self.template, self.get_token_dict())
             return True
         except:
             return False
 
-def set_environment(config_reader, template, token_dict):
-    rootToken = ""
-    for token in token_dict:
-        if token in ROOT_TOKENS:
-            rootToken = token
-
-    debug_msg("The last token is: " + rootToken)
-    path = os.path.join(config_reader.get_path(
-        template, token_dict, rootToken), token_dict[rootToken])
-    filepath = os.path.join(path, WORKSPACE_FILE)
-    filepath = filepath.replace(os.path.sep, '/')
-    debug_msg("Trying to load this workspace: " + path)
-    if os.path.isfile(filepath):
-        debug_msg("Loading this workspace: " + path)
-        # Create maxscript to run to load project workspace
-        maxscript = ('pathConfig.load "' + filepath + '"')
-        print("Maxscript to run: " + maxscript)
-        MaxPlus.Core.EvalMAXScript(maxscript)
-    else:
-        debug_msg("That's not a file, dummy!")
-
-def debug_msg(msg):
-    print(msg)
 
 def open_project_launcher():
     MaxProjectLauncher()
