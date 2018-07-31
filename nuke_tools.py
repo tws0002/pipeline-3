@@ -57,7 +57,8 @@ class NukeProjectLauncher(project_launcher.ProjectLauncher):
 
 	def __init__(self):
 		self.nuke_tools = NukeTools()
-		super(NukeProjectLauncher, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
+		super(NukeProjectLauncher, self).__init__(
+			QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 		nuke.tprint(self.configReader.sayHello())
 
 	def launchProject(self, filePath):
@@ -70,7 +71,8 @@ class NukeSaver(saver.Saver):
 
 	def __init__(self):
 		self.nuke_tools = NukeTools()
-		super(NukeSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
+		super(NukeSaver, self).__init__(
+			QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 		nuke.tprint(self.configReader.sayHello())
 
 	def save_file(self, filePath):
@@ -83,7 +85,8 @@ class NukeImporter(importer.Importer):
 
 	def __init__(self):
 		self.nuke_tools = NukeTools()
-		super(NukeImporter, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
+		super(NukeImporter, self).__init__(
+			QtGuiWidgets.QApplication.activeWindow(), self.nuke_tools)
 		nuke.tprint(self.configReader.sayHello())
 
 	def import_file(self, filePath):
@@ -103,3 +106,16 @@ class NukeImporter(importer.Importer):
 			nuke.scriptReadFile(filePath)
 			return True
 		return False
+
+def add_menu():
+	nuke.tprint("Adding pipeline tools...")
+	menubar = nuke.menu("Nuke")
+	assetmenu = menubar.addMenu('Carbon Pipeline')
+	assetmenu.addCommand(
+		'Project Launcher', 'reload(pipeline.nuke_tools).NukeProjectLauncher()', 'ctrl+shift+o')
+	assetmenu.addCommand('Import', 'reload(pipeline.nuke_tools).NukeImporter()')
+	assetmenu.addCommand('Save', 'reload(pipeline.nuke_tools).NukeSaver()')
+	assetmenu.addCommand(
+		'Version Up', 'pipeline.nuke_tools.NukeTools().version_up()')
+	assetmenu.addCommand(
+		'Publish', 'pipeline.nuke_tools.NukeTools().publish()')
