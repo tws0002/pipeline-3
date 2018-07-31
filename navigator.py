@@ -217,7 +217,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
 			# check software support for current job
 			if self.configReader.checkSoftwareSupport(self.software):
-				# self.extensions = self.get_extensions()
+				self.extensions = self.get_extensions()
 				self.populate_profiles()
 			else:
 				self.clear_window()

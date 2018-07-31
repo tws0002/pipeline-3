@@ -56,7 +56,7 @@ class MayaTools(software_tools.SoftwareTools):
 		self.software = SOFTWARE
 
 	def debugMsg(self, msg):
-		print('maya is da bomb: ' + msg)
+		print(msg)
 
 	def set_environment(self, config_reader, template, token_dict):
 		""" Finds if the root is a shot or asset and looks for the WORKSPACE_FILE there. """
