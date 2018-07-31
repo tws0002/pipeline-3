@@ -77,14 +77,8 @@ class MayaTools(software_tools.SoftwareTools):
 		else:
 			self.debugMsg("That's not a valid workspace!")
 
-	def version_up(self):
-		print("Trying to version up")
-		new_path = super(MayaTools, self).version_up(pm.system.sceneName(), only_filename=True)
-		if new_path:
-			cmds.file(rename=new_path)
-			cmds.file(save=True)
 
-	def save_as(self, path):
+	def _save_as(self, path):
 		try:
 			cmds.file(rename=path)
 			cmds.file(save=True)
@@ -92,9 +86,22 @@ class MayaTools(software_tools.SoftwareTools):
 		except:
 			return False
 
-	def publish(self):
-		publisher.Publisher(SOFTWARE)
+	def _save(self):
+		try:
+			cmds.file(save=True)
+			return True
+		except:
+			raise
+			return False
 
+	def get_project_path(self):
+		return pm.system.sceneName()
+
+	def get_software(self):
+		return SOFTWARE
+
+	def is_project_modified(self):
+		return cmds.file(q=True, modified=True)
 
 class MayaImporter(importer.Importer, MayaTools):
 	def __init__(self):

@@ -16,21 +16,25 @@ except:
 	import PySide2.QtWidgets as QtGuiWidgets
 	import PySide2.QtUiTools as QtUiTools
 
-import software_tools
 
 class Publisher(QtGuiWidgets.QDialog):
-	def __init__(self, current_software_tools):
+	def __init__(self, pub_path, pub_name):
 		super(Publisher, self).__init__(QtGuiWidgets.QApplication.activeWindow())
-		self.current_software_tools = current_software_tools
+		self.pub_name = pub_name
+		self.pub_path = pub_path
 		self.init_ui()
+		self.on_name_change()
 		self.show()
 
 	def init_ui(self):
 		self.ok_button = QtGuiWidgets.QPushButton("OK")
-		# self.ok_button.clicked.connect(self.on_ok)
+		self.ok_button.clicked.connect(self.accept)
 		self.cancel_button = QtGuiWidgets.QPushButton("Cancel")
-		# self.cancel_button.clicked.connect(self.reject)
+		self.cancel_button.clicked.connect(self.reject)
 		self.file_name_box = QtGuiWidgets.QLineEdit()
+		self.file_name_box.setText(self.pub_name)
+		self.file_name_box.textEdited.connect(self.on_name_change)
+		self.path_label = QtGuiWidgets.QLabel()
 
 		hbox = QtGuiWidgets.QHBoxLayout()
 		hbox.addStretch(1)
@@ -40,31 +44,22 @@ class Publisher(QtGuiWidgets.QDialog):
 		vbox = QtGuiWidgets.QVBoxLayout()
 		vbox.addWidget(self.file_name_box)
 		vbox.addStretch(1)
+		vbox.addWidget(self.path_label)
 		vbox.addLayout(hbox)
 
 		self.setLayout(vbox)
 		# self.resize(500,500)
 
-	def publish():
-		# First, check that the current evironment is valid
-		if environment.is_valid(software='maya'):
-			# Check if file has been modified
-			file_modified = cmds.file(q=True, modified=True)
-			if file_modified and self.file_not_saved_dlg():
-				cmds.file(save=True)
-			env_config_reader = environment.get_config_reader()
-			profile = environment.get_profile()
+	def on_name_change(self):
+		self.path_label.setText(os.path.join(self.pub_path, self.file_name_box.text()))
 
-			if maya_hooks.publish():
-				pass
-			else:
-				print("Publish failed, reverting to previous save.")
-		else:
-			print("Environment is not valid!")
-
-
+	def get_name(self):
+		return self.file_name_box.text()
 # Debugging -----------------------------------------------
 if __name__== '__main__':
 	app = QtGuiWidgets.QApplication(sys.argv)
-	ex = Publisher('maya')
-	app.exec_()
+	ex = Publisher('path/to/place', 'maya')
+	if ex.exec_():
+		name = ex.file_name_box.text()
+		print(name)
+	# app.exec_()
