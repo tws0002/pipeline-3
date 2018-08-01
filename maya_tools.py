@@ -209,15 +209,14 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
         try: 
             cmds.file(filePath, o=True)
-            self.set_environment(self.configReader, self.template, self.get_token_dict())
+            self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
             return True
         except RuntimeError:
-            self.maya_tools.debug_msg("Hey, this is cool")
             ret = self.fileNotSavedDlg()
             if ret == QtGuiWidgets.QMessageBox.Save:
                 cmds.file(save=True)
                 cmds.file(filePath, o=True)
-                self.set_environment(self.configReader, self.template, self.get_token_dict())
+                self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
                 return True
             elif ret == QtGuiWidgets.QMessageBox.Discard:
                 cmds.file(new=True, force=True) 
