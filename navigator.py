@@ -128,6 +128,7 @@ class Navigator(QtGuiWidgets.QDialog):
 
         # Launch and cancel buttons ------------------------------------------------------
         self.execute_button = self.create_execute_button()
+        self.execute_button.setDefault(True)
 
 
         cancelButton = QtGuiWidgets.QPushButton("Cancel")
