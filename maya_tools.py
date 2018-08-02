@@ -11,7 +11,6 @@ import environment
 import maya_hooks
 import software_tools
 
-
 import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as pm
@@ -32,7 +31,7 @@ except:
 SOFTWARE = "maya"
 WORKSPACE_FILE = "workspace.mel"
 ROOT_TOKENS = ['asset', 'shot']
-
+from pipeline_config import TEMP_FILE_SUFFIX
 
 def addMenu():
     print("Loading Pipeline...")
@@ -45,13 +44,17 @@ def addMenu():
                 command="pipeline.maya_tools.MayaProjectLauncher()", parent=customMenu)
     pm.menuItem(label="Import",
                 command="pipeline.maya_tools.MayaImporter()", parent=customMenu)
-    pm.menuItem(label="Save", command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
+    pm.menuItem(label="Save", 
+                command="pipeline.maya_tools.MayaSaver()", parent=customMenu)
+
     pm.menuItem(divider=True, parent=customMenu)
+
     pm.menuItem(label="Version Up",
                 command="pipeline.maya_tools.MayaTools().version_up()", parent=customMenu)
+    pm.menuItem(label="Create Temporary Copy",
+                command="pipeline.maya_tools.MayaTools().open_temp_file()", parent=customMenu)
     pm.menuItem(label="Publish",
                 command="pipeline.maya_tools.MayaTools().publish()", parent=customMenu)
-
 
 
 class MayaTools(software_tools.SoftwareTools):
@@ -81,7 +84,6 @@ class MayaTools(software_tools.SoftwareTools):
         else:
             self.debug_msg("That's not a valid workspace!")
 
-
     def _save_as(self, path):
         try:
             cmds.file(rename=path)
@@ -104,7 +106,34 @@ class MayaTools(software_tools.SoftwareTools):
     def is_project_modified(self):
         return cmds.file(q=True, modified=True)
 
+    def open_project(self, path, force=True):
+        try:
+            cmds.file(path, open=True, force=True)
+            return True
+        except:
+            return False
+
+    def open_temp_file(self):
+        project_path = self.get_project_path()
+        if self.is_project_modified():
+            if self.file_not_saved_dlg():
+                self._save()
+            else:
+                return ''
+
+        # Get current project name
+        project_name, ext = os.path.splitext(os.path.basename(project_path))
+        temp_project_name = project_name + TEMP_FILE_SUFFIX + ext
+
+        # Check if it's already a temporary file
+        if project_name.endswith(TEMP_FILE_SUFFIX):
+            raise ValueError("This is already a temp file!")
+
+        self.save_project_as(
+            os.path.join(os.path.dirname(project_path), temp_project_name))
+
 class MayaImporter(importer.Importer, MayaTools):
+
     def __init__(self):
         self.maya_tools = MayaTools()
         super(MayaImporter, self).__init__(
@@ -118,7 +147,7 @@ class MayaImporter(importer.Importer, MayaTools):
 
 
 class ImportDialog(QtGuiWidgets.QDialog):
-    
+
     def __init__(self, activeWindow, file_path):
         self.maya_tools = MayaTools()
         super(ImportDialog, self).__init__(activeWindow)
@@ -143,7 +172,6 @@ class ImportDialog(QtGuiWidgets.QDialog):
         self.use_namespace_checkbox.setChecked(True)
         self.use_namespace_checkbox.stateChanged.connect(self.on_namespace_checkbox_change)
         self.namespace_lineedit = QtGuiWidgets.QLineEdit(self.file_name)
-
 
         reference_form = QtGuiWidgets.QFormLayout()
         reference_form.addRow("Reference", self.ref_checkbox)
@@ -171,7 +199,6 @@ class ImportDialog(QtGuiWidgets.QDialog):
 
         self.setLayout(vbox)
 
-
     def on_ok(self):
         flags = self.get_flags()
         print("flags: " + str(flags))
@@ -198,6 +225,7 @@ class ImportDialog(QtGuiWidgets.QDialog):
 
 
 class MayaProjectLauncher(project_launcher.ProjectLauncher):
+
     def __init__(self):
         self.maya_tools = MayaTools()
         super(MayaProjectLauncher, self).__init__(
@@ -206,22 +234,24 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
     def launchProject(self, filePath):
         tokenDict = self.get_token_dict()
-
         try: 
             cmds.file(filePath, o=True)
-            self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
+            self.maya_tools.set_environment(
+                self.configReader, self.template, self.get_token_dict())
             return True
         except RuntimeError:
             ret = self.fileNotSavedDlg()
             if ret == QtGuiWidgets.QMessageBox.Save:
                 cmds.file(save=True)
                 cmds.file(filePath, o=True)
-                self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
+                self.maya_tools.set_environment(
+                    self.configReader, self.template, self.get_token_dict())
                 return True
             elif ret == QtGuiWidgets.QMessageBox.Discard:
                 cmds.file(new=True, force=True) 
                 cmds.file(filePath, open=True)
-                self.maya_tools.set_environment(self.configReader, self.template, self.get_token_dict())
+                self.maya_tools.set_environment(
+                    self.configReader, self.template, self.get_token_dict())
                 return True
             elif ret == QtGuiWidgets.QMessageBox.Cancel:
                 self.maya_tools.debug_msg("Nevermind...")
@@ -240,7 +270,7 @@ class MayaProjectLauncher(project_launcher.ProjectLauncher):
 
 
 class MayaSaver(saver.Saver):
-    
+
     def __init__(self):
         self.maya_tools = MayaTools()
         super(MayaSaver, self).__init__(QtGuiWidgets.QApplication.activeWindow(), self.maya_tools)

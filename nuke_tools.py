@@ -77,6 +77,7 @@ class NukeTools(software_tools.SoftwareTools):
             self.debug_msg("removing " + favorite_name)
             nuke.removeFavoriteDir(favorite_name)
 
+
 class NukeProjectLauncher(project_launcher.ProjectLauncher):
 
     def __init__(self):
@@ -94,6 +95,7 @@ class NukeProjectLauncher(project_launcher.ProjectLauncher):
             return True
         else:
             return False
+
 
 class NukeSaver(saver.Saver):
 

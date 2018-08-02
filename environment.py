@@ -68,7 +68,6 @@ def get_template():
     except:
         return ''
 
-
 def get_config_reader():
     job_path = os.path.join(get_jobs_dir(), get_job())
     env_config_reader = config_reader.ConfigReader(job_path)

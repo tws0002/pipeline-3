@@ -36,22 +36,24 @@ def deleteItemsOfLayout(layout):
             else:
                 deleteItemsOfLayout(item.layout())
 
-
 # Constants
 from pipeline_config import DEFAULT_JOBS_DIR
 from pipeline_config import CONFIG_FILE_NAME
 from pipeline_config import LOCAL_CONFIG_PATH
+
 
 class DeselectableTreeWidget(QtGuiWidgets.QTreeWidget):
     def mousePressEvent(self, event):
         self.clearSelection()
         QtGuiWidgets.QTreeView.mousePressEvent(self, event)
 
+
 class QHLine(QtGuiWidgets.QFrame):
     def __init__(self):
         super(QHLine, self).__init__()
         self.setFrameShape(QtGuiWidgets.QFrame.HLine)
         self.setFrameShadow(QtGuiWidgets.QFrame.Sunken)
+
 
 class Navigator(QtGuiWidgets.QDialog):
 
@@ -130,7 +132,6 @@ class Navigator(QtGuiWidgets.QDialog):
         self.execute_button = self.create_execute_button()
         self.execute_button.setDefault(True)
 
-
         cancelButton = QtGuiWidgets.QPushButton("Cancel")
         cancelButton.clicked.connect(self.close)
 
@@ -149,17 +150,13 @@ class Navigator(QtGuiWidgets.QDialog):
 
         self.resize(1200,500)
 
-
-
     def create_execute_button(self):
         """ This is a separate function so the button can be placed 
         correctly in the correct order. 
         """
         execute_button = QtGuiWidgets.QPushButton("Execute")
         execute_button.setEnabled(False)
-
         return execute_button
-
 
     def jobs_dir_label_click(self, click_event):
         """Opens folder browser when jobs_dir_label is clicked. """
@@ -312,7 +309,6 @@ class Navigator(QtGuiWidgets.QDialog):
                 self.configReader, self.template, self.get_token_dict(), token, new_token)
             self.populate_token(token)
 
-
     def getDirList(self, directory, reverse=False):
         """Returns a sorted list of directories in a given directory with an optional 
         flag to reverse the order.
@@ -324,7 +320,6 @@ class Navigator(QtGuiWidgets.QDialog):
             return []
         return sorted(dirs, reverse=reverse)
 
-
     def getFileList(self, directory, extensions=[], reverse=False):
         """Returns a sorted list of files with a given extension in a given directory with 
         an optional flag to reverse the order.
@@ -332,7 +327,8 @@ class Navigator(QtGuiWidgets.QDialog):
         try:
             if extensions:
                 files = [name for name in os.listdir(directory)
-                        if (not os.path.isdir(os.path.join(directory, name))) & name.lower().endswith(tuple(extensions))]
+                        if (not os.path.isdir(os.path.join(directory, name))) 
+                        & name.lower().endswith(tuple(extensions))]
             else:
                 files = [name for name in os.listdir(directory)
                         if (not os.path.isdir(os.path.join(directory, name)))]
@@ -350,7 +346,8 @@ class Navigator(QtGuiWidgets.QDialog):
         # Populate the next token if the previous one has a selection or it's the first one
         if previous_token_obj.get_current() or previous_token_index <= 0:
             token_dict = self.get_token_dict()
-            populate_path = self.configReader.get_path(self.template, self.get_token_dict(), token)
+            populate_path = self.configReader.get_path(
+                self.template, self.get_token_dict(), token)
 
             folderList = self.getDirList(populate_path)
             excludeList = self.configReader.get_excludes(token)
@@ -366,7 +363,6 @@ class Navigator(QtGuiWidgets.QDialog):
             token_obj.set_list(folderList)
         else:
             token_obj.clear()
-
 
     def populate_file(self):
         """Populates the file list widget based on the previous tokens."""
@@ -408,7 +404,6 @@ class Navigator(QtGuiWidgets.QDialog):
         path = item.text(2)
         self.build_file_tree(path, item)
 
-
     def build_file_tree(self, path, tree):
         """ Finds all files and folders in the given path and adds it to the tree 
         under the given tree item 
@@ -434,7 +429,6 @@ class Navigator(QtGuiWidgets.QDialog):
                 iconProvider = QtGuiWidgets.QFileIconProvider()
                 icon = iconProvider.icon(fileInfo)
                 parent_itm.setIcon(0, icon)
-
 
     def on_file_change(self, item):
         """Called when the file tree widget is changed."""
@@ -477,7 +471,6 @@ class Navigator(QtGuiWidgets.QDialog):
                 self.execute_button.setEnabled(True)
             else:
                 self.execute_button.setEnabled(False)
-
 
     def get_token_dict(self):
         """Get a dictionary of tokens from the dictionary of token objects."""
@@ -562,7 +555,6 @@ class Navigator(QtGuiWidgets.QDialog):
             tokenDict[str(token)] = str(token_obj.get_current())
         recentOption["tokens"] = tokenDict
 
-
         for recent, value in recentOption.iteritems():
             os.environ[recent] = str(value)
         
@@ -591,6 +583,7 @@ class Navigator(QtGuiWidgets.QDialog):
         with open(LOCAL_CONFIG_PATH, 'w') as outfile:
             yaml.dump(newConfig, outfile, default_flow_style=False)
 
+
 class Token():
 
     def __init__(self, parent, token):
@@ -606,7 +599,6 @@ class Token():
 
     def __str__(self):
         return "Token Obj:\nParent: " + str(self.parent) + " token: " + str(self.token)
-
 
     def on_token_change(self, text):
         self.current_text = text

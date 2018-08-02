@@ -60,7 +60,6 @@ class Saver(navigator.Navigator):
                 self.save_recents(write_local_config=True)
                 self.close()
 
-
     def save_file(self, file_path):
         """Just a placeholder. Should be overridden by child."""
         self.current_software_tools.debug_msg("Saving!")

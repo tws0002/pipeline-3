@@ -6,6 +6,8 @@ import os
 
 JOB_PATH_TOKEN = "job_path"
 from pipeline_config import CONFIG_FILE_NAME
+
+
 class ConfigReader:
 
     def __init__(self, job_path, config_path=None):
@@ -33,15 +35,20 @@ class ConfigReader:
         return config
 
     def replace_tokens(self, templateString, tokenDict):
-        """Takes a templateString and attempts to create a path with a dictionary of tokens and values"""
+        """Takes a templateString and attempts to create a path with
+         a dictionary of tokens and values
+         """
         templateTokens = self.find_tokens(templateString)
         formatedTemplateString = templateString
         for token in templateTokens:
             if token in tokenDict and tokenDict.get(token):
                 tokenSyntax = "<" + token + ">"
-                # print("trying to replace " + token + " of this syntax: " + tokenSyntax + " with " + self.tokenList.get(token))
+                # print("trying to replace " 
+                # + token + " of this syntax: " 
+                # + tokenSyntax + " with " + self.tokenList.get(token))
                 # print("first it's this: " + templateString)
-                formatedTemplateString = formatedTemplateString.replace(tokenSyntax, tokenDict.get(token))
+                formatedTemplateString = formatedTemplateString.replace(
+                    tokenSyntax, tokenDict.get(token))
             else:
                 pass
                 # raise ValueError("Missing token: " + token)
@@ -88,7 +95,6 @@ class ConfigReader:
             except:
                 pass
         return name_template
-            
 
     def get_name(self, profile, tokenDict, software=None, ver="001"):
         name_template = self.get_name_profile_template(profile, software)
@@ -126,7 +132,6 @@ class ConfigReader:
         if JOB_PATH_TOKEN in tokens:
             tokens.remove(JOB_PATH_TOKEN)
         return tokens
-
 
     def find_tokens(self, templateString):
         """Finds tokens in a template and returns them in a list"""
@@ -189,7 +194,7 @@ class ConfigReader:
             return hook_path
         except:
             return ''
-        
+
     def get_profile_template(self, software, profile):
         profileTemplate = self.get_launcher_profiles(software)[profile]
         return profileTemplate

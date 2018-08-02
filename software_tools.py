@@ -9,6 +9,8 @@ import imp
 import publisher
 import environment
 
+from pipeline_config import TEMP_FILE_SUFFIX
+
 from shutil import copyfile
 
 try:
@@ -27,6 +29,7 @@ except:
 
 REG_VERSION_PATTERN = r'(?<=(?i)_v)\d+'
 
+
 class SoftwareTools(object):
 
     def debug_msg(self, msg):
@@ -44,8 +47,18 @@ class SoftwareTools(object):
 
         return new_path
 
+    def remove_temp_suffix(self, name):
+        """ If the temporary file suffix exists, strip it and add the extension 
+        back to the end. """
+        raw_name, ext = os.path.splitext(name)
+        if raw_name.endswith(TEMP_FILE_SUFFIX):
+            name = raw_name[:-len(TEMP_FILE_SUFFIX)] + ext
+        return name
+
     def create_pub_name(self, name):
         """ Takes the project name and replaces v### with 'PUBLISH' """
+        # If it's a temporary file, strip the suffix before renaming
+        name = self.remove_temp_suffix(name)
         # Make a list of tuples for all instances of the reg_version_pattern
         ver_index_list = [m.span() for m in re.finditer(REG_VERSION_PATTERN, name)]
         if len(ver_index_list) < 1:
@@ -157,8 +170,10 @@ class SoftwareTools(object):
         else:
             return False
 
-    def publish(self):
+    def publish(self, project_path=None):
         """ Publishes the current file base on the file name and location. """
+        if not project_path:
+            project_path = self.get_project_path()
         # Check that the environment is valid
         if environment.is_valid(software=self.get_software()):
             # Check if the file has been modified
@@ -169,18 +184,19 @@ class SoftwareTools(object):
                     return False
             
             # Define directories
-            proj_dir = os.path.dirname(self.get_project_path())
-            self.debug_msg("project basename = " + os.path.basename(self.get_project_path()))
+            proj_dir = os.path.dirname(project_path)
+            raw_proj_name, proj_ext = os.path.splitext(os.path.basename(project_path))
+            self.debug_msg("project basename = " + os.path.basename(project_path))
             archive_dir = os.path.join(proj_dir, 'archive')
             publish_dir = os.path.join(proj_dir, 'publish')
 
             # Append 'PUBLISH' to file before archiving it
-            archive_name, ext = os.path.splitext(os.path.basename(self.get_project_path()))
-            archive_name = archive_name + '_PUBLISH'
-            archive_name = archive_name + ext
+            archive_name, ext = os.path.splitext(os.path.basename(project_path))
+            archive_name = self.remove_temp_suffix(archive_name)
+            archive_name = archive_name + '_PUBLISH' + ext
 
             # Create publish name
-            pub_name = self.create_pub_name(os.path.basename(self.get_project_path()))
+            pub_name = self.create_pub_name(os.path.basename(project_path))
 
             publisher_dlg = publisher.Publisher(publish_dir, pub_name)
             if publisher_dlg.exec_():
@@ -193,7 +209,7 @@ class SoftwareTools(object):
                     except OSError:
                         if not os.path.isdir(archive_dir):
                             raise
-                    copyfile(self.get_project_path(), os.path.join(archive_dir, archive_name))
+                    copyfile(project_path, os.path.join(archive_dir, archive_name))
 
                     # Create publish folder if it doesn't exist
                     try:
@@ -201,7 +217,18 @@ class SoftwareTools(object):
                     except OSError:
                         if not os.path.isdir(publish_dir):
                             raise
-                    copyfile(self.get_project_path(), os.path.join(publish_dir, pub_name))
+                    copyfile(project_path, os.path.join(publish_dir, pub_name))
+
+                    if publisher_dlg.get_del_state():
+                        if raw_proj_name.endswith(TEMP_FILE_SUFFIX):
+                            if os.path.isfile(project_path):
+                                self.debug_msg("Deleting this file: " + project_path)
+                                os.remove(project_path)
+                    # If a temporary file is currently open, open the versioned file instead
+                    versioned_file = self.remove_temp_suffix(project_path)
+                    if versioned_file != project_path and os.path.isfile(versioned_file):
+                        self.debug_msg("Opening versioned file")
+                        self.open_project(versioned_file)
         else:
             self.debug_msg("Environment is not valid!")
 

@@ -38,6 +38,10 @@ class Publisher(QtGuiWidgets.QDialog):
         self.file_name_box.textEdited.connect(self.on_name_change)
         self.path_label = QtGuiWidgets.QLabel()
 
+        self.del_temp_checkbox = QtGuiWidgets.QCheckBox(
+            "Delete temporary file?")
+        self.del_temp_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+
         hbox = QtGuiWidgets.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.ok_button)
@@ -45,12 +49,16 @@ class Publisher(QtGuiWidgets.QDialog):
 
         vbox = QtGuiWidgets.QVBoxLayout()
         vbox.addWidget(self.file_name_box)
+        vbox.addWidget(self.del_temp_checkbox)
         vbox.addStretch(1)
         vbox.addWidget(self.path_label)
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
         # self.resize(500,500)
+
+    def get_del_state(self):
+        return self.del_temp_checkbox.isChecked()
 
     def on_name_change(self):
         """ When text box changes, edit path_label. """
