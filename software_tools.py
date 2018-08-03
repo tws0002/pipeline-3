@@ -100,6 +100,20 @@ class SoftwareTools(object):
         except:
             raise
 
+    def find_env_file(self, path, env_file_name):
+        """ Looks in each directory level of "path" for the env_file_name.
+        If it finds it, it returns the path to the file """
+        current_dir = path
+        while current_dir:
+            env_file_path = os.path.join(current_dir, env_file_name)
+            if os.path.isfile(env_file_path):
+                return env_file_path
+            current_dir, check_folder = os.path.split(current_dir)
+            # If there are no more directories, break
+            if not check_folder:
+                break
+        return ''
+
     def version_up(self, only_filename=False):
         """ Given a path this will version up the file and return the incremented path if the 
         file doesn't already exist, or if the user chooses to overwrite the existing file. 
@@ -264,6 +278,10 @@ class SoftwareTools(object):
 if __name__ == '__main__':
     path = 'V:/Jobs/182276_Essilor_Out_of_Focus/Design/Production/TVC60/Assets/Environments/Gym/model/esof_gym_model_V05.ma'
     app = QtGuiWidgets.QApplication(sys.argv)
-    print(SoftwareTools().version_up(path))
+    # print(SoftwareTools().version_up(path))
+    print("Here it is! " + SoftwareTools().find_env_file(
+        'V:\\Jobs\\182350_Lululemon\\Design\\Production\\tvc_20_1920\\Previz\\Projects\\CG\\layout', 'workspaces.mel'))
+    # print(os.path.isfile("C:\\Users\\athompson\\Desktop\\test.md"))
+    # print("C:\\Users\\athompson\\Desktop\\test.md")
     # print(get_version_str(path, False))
     # print(get_version_int(path))

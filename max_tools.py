@@ -25,7 +25,6 @@ except:
 
 SOFTWARE = "max"
 WORKSPACE_FILE = "maxWorkspace.mxp"
-ROOT_TOKENS = ['asset', 'shot']
 
 
 class MaxTools(software_tools.SoftwareTools):
@@ -57,15 +56,13 @@ class MaxTools(software_tools.SoftwareTools):
         return MaxPlus.FileManager.IsSaveRequired()
 
     def set_environment(self, config_reader, template, token_dict):
-        rootToken = ""
-        for token in token_dict:
-            if token in ROOT_TOKENS:
-                rootToken = token
+        """ Find the workspace file and implements it. """
 
-        self.debug_msg("The last token is: " + rootToken)
-        path = os.path.join(config_reader.get_path(
-            template, token_dict, rootToken), token_dict[rootToken])
-        filepath = os.path.join(path, WORKSPACE_FILE)
+        # Find workspace file
+        filepath = self.find_env_file(config_reader.get_path(
+            template, token_dict), WORKSPACE_FILE)
+        path = os.path.dirname(filepath)
+
         filepath = filepath.replace(os.path.sep, '/')
         self.debug_msg("Trying to load this workspace: " + path)
         if os.path.isfile(filepath):
@@ -75,7 +72,7 @@ class MaxTools(software_tools.SoftwareTools):
             print("Maxscript to run: " + maxscript)
             MaxPlus.Core.EvalMAXScript(maxscript)
         else:
-            self.debug_msg("That's not a file, dummy!")
+            self.debug_msg("That's not a valid workspace!")
 
 
 
