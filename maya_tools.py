@@ -68,14 +68,20 @@ class MayaTools(software_tools.SoftwareTools):
     def set_environment(self, config_reader, template, token_dict):
         """ Finds if the root is a shot or asset and looks for the WORKSPACE_FILE there. """
         # Find current root token
+
         rootToken = ""
         for token in token_dict:
             if token in ROOT_TOKENS:
                 rootToken = token
 
         self.debug_msg("The last token is: " + rootToken)
-        path = os.path.join(config_reader.get_path(
-            template, token_dict, rootToken), token_dict[rootToken])
+        try:
+            path = os.path.join(config_reader.get_path(
+                template, token_dict, rootToken), token_dict[rootToken])
+        except:
+            path = config_reader.get_path(template, token_dict)
+            self.debug_msg("This is the path I'm trying to find previz in: " + path)
+            path = path[:path.rfind('Previz')+6]
         filepath = os.path.join(path, WORKSPACE_FILE)
         self.debug_msg("Trying to load this workspace: " + path)
         if os.path.isfile(filepath):
