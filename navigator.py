@@ -7,6 +7,8 @@ import time
 from collections import OrderedDict
 import yaml
 import ast
+import platform
+import subprocess
 
 try:
     # < Nuke 11
@@ -127,6 +129,7 @@ class Navigator(QtGuiWidgets.QDialog):
         self.file_widgets = [self.file_label, self.file_tree_widget, self.file_line_edit]
 
         self.path_label = QtGuiWidgets.QLabel()
+        self.path_label.mousePressEvent = self.path_label_click
 
         # Launch and cancel buttons ------------------------------------------------------
         self.execute_button = self.create_execute_button()
@@ -583,6 +586,18 @@ class Navigator(QtGuiWidgets.QDialog):
         with open(LOCAL_CONFIG_PATH, 'w') as outfile:
             yaml.dump(newConfig, outfile, default_flow_style=False)
 
+    def path_label_click(self, click_event):
+        path = self.path_label.text()
+        # Don't try and open a file
+        if os.path.isfile(path):
+            path = os.path.dirname(path)
+            
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
 
 class Token():
 
@@ -621,5 +636,5 @@ class Token():
 # Debugging -----------------------------------------------
 if __name__== '__main__':
     app = QtGuiWidgets.QApplication(sys.argv)
-    ex = Navigator(app.activeWindow(), 'maya')
+    ex = Navigator(app.activeWindow(), software_tools.SoftwareTools())
     app.exec_()
